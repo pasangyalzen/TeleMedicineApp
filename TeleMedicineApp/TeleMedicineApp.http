@@ -1,0 +1,6 @@
+@TeleMedicineApp_HostAddress = http://localhost:5186
+
+GET {{TeleMedicineApp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
