@@ -1,15 +1,15 @@
 using System.Security.Claims;
-using TeleMedicineApp.Controllers;
-using TeleMedicineApp.Data;
-using TeleMedicineApp.Models;
-using TeleMedicineApp.Services;
-using TeleMedicineApp.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.IdentityModel.Tokens;
+using TeleMedicineApp.Controllers;
+using TeleMedicineApp.Data;
+using TeleMedicineApp.Models;
+using TeleMedicineApp.Services;
+using TeleMedicineApp.ViewModels;
 
 namespace TeleMedicineApp.Areas.Admin.Controllers;
 

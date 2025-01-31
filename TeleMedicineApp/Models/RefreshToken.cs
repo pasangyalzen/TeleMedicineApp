@@ -1,6 +1,6 @@
-using TeleMedicineApp.Data;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Models
 {

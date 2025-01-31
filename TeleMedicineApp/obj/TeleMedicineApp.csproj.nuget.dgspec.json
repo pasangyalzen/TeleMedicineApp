@@ -4,14 +4,14 @@
     "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/TeleMedicineApp.csproj": {}
   },
   "projects": {
-    "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/TeleMedicineApp.csproj": {
+    "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/SQLHelper/SQLHelper.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/TeleMedicineApp.csproj",
-        "projectName": "TeleMedicineApp",
-        "projectPath": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/TeleMedicineApp.csproj",
+        "projectUniqueName": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/SQLHelper/SQLHelper.csproj",
+        "projectName": "SQLHelper",
+        "projectPath": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/SQLHelper/SQLHelper.csproj",
         "packagesPath": "/Users/pasanggelzeen/.nuget/packages/",
-        "outputPath": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/obj/",
+        "outputPath": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/SQLHelper/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/pasanggelzeen/.nuget/NuGet/NuGet.Config"
@@ -43,6 +43,78 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "System.Data.SqlClient": {
+              "target": "Package",
+              "version": "[4.8.6, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/TeleMedicineApp.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/TeleMedicineApp.csproj",
+        "projectName": "TeleMedicineApp",
+        "projectPath": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/TeleMedicineApp.csproj",
+        "packagesPath": "/Users/pasanggelzeen/.nuget/packages/",
+        "outputPath": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/pasanggelzeen/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/SQLHelper/SQLHelper.csproj": {
+                "projectPath": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/SQLHelper/SQLHelper.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "MailKit": {
+              "target": "Package",
+              "version": "[4.9.0, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.4, )"

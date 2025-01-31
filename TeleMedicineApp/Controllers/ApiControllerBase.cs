@@ -1,5 +1,5 @@
-using TeleMedicineApp.Models;
 using Microsoft.AspNetCore.Mvc;
+using TeleMedicineApp.Models;
 
 namespace TeleMedicineApp.Controllers
  {

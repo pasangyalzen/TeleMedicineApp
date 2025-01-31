@@ -10,6 +10,7 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using TeleMedicineApp.Data;
 using TeleMedicineApp.Models;
+using TeleMedicineApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
+//Add CORS policy 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        builder =>
+        {
+            builder
+                .WithOrigins("http://localhost:3000") // React app origin
+                .AllowAnyMethod() // Allow all HTTP methods (GET, POST, etc.)
+                .AllowAnyHeader() // Allow all headers
+                .AllowCredentials(); // Allow cookies/credentials if needed
+        });
+});
+
 builder.Services.AddSwaggerGen(options =>
 {
     // Define Swagger docs for each area (Admin, Customer, etc.)
@@ -75,6 +91,7 @@ var jwtConfig = builder.Configuration.GetSection("JWT").Get<JwtConfig>();
 builder.Services.AddSingleton(jwtConfig);
 builder.Services.AddScoped<IJwtService, JwtService>();
 
+builder.Services.AddScoped<EmailService>();
 // Add JWT Authentication
 builder.Services.AddAuthentication(options =>
     {
@@ -181,6 +198,8 @@ if (app.Environment.IsDevelopment())
         // c.RoutePrefix = string.Empty;  // Swagger UI at the root (http://localhost:5000/)
     });
 }
+
+app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
