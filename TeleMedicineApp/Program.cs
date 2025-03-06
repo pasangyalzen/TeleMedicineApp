@@ -7,7 +7,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SQLHelper;
 using Swashbuckle.AspNetCore.Filters;
+using TeleMedicineApp.Areas.Admin.Provider;
+//using TeleMedicineApp.Areas.Appointments.Provider;
 using TeleMedicineApp.Data;
 using TeleMedicineApp.Models;
 using TeleMedicineApp.Services;
@@ -27,7 +30,7 @@ builder.Services.AddCors(options =>
         builder =>
         {
             builder
-                .WithOrigins("http://localhost:3000") // React app origin
+                .WithOrigins("http://localhost:3000","http://localhost:5173") // React app origin
                 .AllowAnyMethod() // Allow all HTTP methods (GET, POST, etc.)
                 .AllowAnyHeader() // Allow all headers
                 .AllowCredentials(); // Allow cookies/credentials if needed
@@ -83,13 +86,17 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-builder.Services.AddDbContext<ApplicationDbContext>(options => 
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 // Add JWT Configuration
 var jwtConfig = builder.Configuration.GetSection("JWT").Get<JwtConfig>();
 builder.Services.AddSingleton(jwtConfig);
+builder.Services.AddScoped<DoctorManager>();
+builder.Services.AddScoped<AppointmentManager>();  // Add this line
 builder.Services.AddScoped<IJwtService, JwtService>();
+//builder.Services.AddScoped<AppointmentManager>();
 
 builder.Services.AddScoped<EmailService>();
 // Add JWT Authentication
@@ -169,6 +176,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 
 
 var app = builder.Build();
+SQLHandlerAsync.Connectionconfig = connectionString;
 
 using (var scope = app.Services.CreateScope())
 {

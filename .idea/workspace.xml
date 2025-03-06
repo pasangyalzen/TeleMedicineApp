@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7be1bed9-f5fa-436a-a1bf-73adc8c98068" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Admin/Controllers/AdminDashboardController.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Doctor/Controllers/AccountController.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Doctor/Controllers/DoctorDashboardController.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Doctor/Models/DoctorDetails.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Doctor/ViewModels/DoctorRegistrationViewModel.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Pharmacist/Controllers/AccountController.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Pharmacist/Controllers/PharmacistDashboardController.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Pharmacist/Models/PharmacistDetails.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Pharmacist/VIewModels/PharmacistRegistrationViewModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/Areas/Admin/Controllers/AccountController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/Areas/Admin/Controllers/AccountController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/Controllers/ApiControllerBase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/Controllers/ApiControllerBase.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/Data/ApplicationDbContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/Data/ApplicationDbContext.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/Migrations/ApplicationDbContextModelSnapshot.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/Migrations/ApplicationDbContextModelSnapshot.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/Models/RefreshToken.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/Models/RefreshToken.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/Services/JwtService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/Services/JwtService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/TeleMedicineApp.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/TeleMedicineApp.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/bin/Debug/net8.0/TeleMedicineApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/bin/Debug/net8.0/TeleMedicineApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/bin/Debug/net8.0/TeleMedicineApp.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/bin/Debug/net8.0/TeleMedicineApp.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.csproj.CoreCompileInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.csproj.CoreCompileInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/TeleMedicineApp.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/ref/TeleMedicineApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/ref/TeleMedicineApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/refint/TeleMedicineApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/Debug/net8.0/refint/TeleMedicineApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/rider.project.model.nuget.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TeleMedicineApp/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/TeleMedicineApp/obj/rider.project.restore.info" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "pasangyalzen"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "git@github.com:pasangyalzen/TeleMedicineApp.git",
+    "accountId": "f345e318-3d18-4c03-93bc-bbc8dac97211"
+  }
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 6
+}]]></component>
+  <component name="ProjectId" id="2s7vhZD4rtVElaRaVBcS82pNRng" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7be1bed9-f5fa-436a-a1bf-73adc8c98068" name="Changes" comment="" />
+      <created>1737819547325</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1737819547325</updated>
+      <workItem from="1737819548356" duration="622000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+</project>

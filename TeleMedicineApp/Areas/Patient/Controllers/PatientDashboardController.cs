@@ -22,7 +22,7 @@ namespace TeleMedicineApp.Areas.Admin.Controllers
         {
             _applicationDbContext =
                 applicationDbContext ?? throw new ArgumentNullException(nameof(applicationDbContext));
-            _doctorManager = new DoctorManager();
+          //  _doctorManager = new DoctorManager();
         }
 
         [AllowAnonymous]

@@ -1,15 +1,11 @@
-using System.ComponentModel.DataAnnotations;
-using TeleMedicineApp.Data;
+namespace TeleMedicineApp.Areas.Admin.ViewModels;
 
-namespace TeleMedicineApp.Areas.Doctor.Models;
-
-public class DoctorDetails
+public class DoctorDetailsViewModel
 {
-    [Key]
     public int DoctorId { get; set; }
-    public string UserId { get; set; }
-    public ApplicationUser User { get; set; }
+    //public string UserId { get; set; }
     public string FullName { get; set; }
+    public string Email { get; set; }
     public string PhoneNumber { get; set; }
     public string Gender { get; set; }
     public DateTime DateOfBirth { get; set; }
@@ -20,7 +16,8 @@ public class DoctorDetails
     public string ClinicName { get; set; }
     public string ClinicAddress { get; set; }
     public decimal ConsultationFee { get; set; }
-    public string ProfileImage { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; }
+    //public string ProfileImage { get; set; }
+    //public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    //public string Password { get; set; }
+    public DateTime UpdatedAt { get; set; } 
 }
