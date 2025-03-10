@@ -11,7 +11,7 @@ using TeleMedicineApp.Services;
 namespace TeleMedicineApp.Areas.Admin.Controllers;
 
 [ApiController]
-[Route("api/admin/appointments")]
+[Route("api/admin/appointments/[action]")]
 public class AppointmentController : ApiControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -46,7 +46,7 @@ public class AppointmentController : ApiControllerBase
     /// <summary>
     /// Retrieves a paginated list of appointments.
     /// </summary>
-    [HttpGet("GetTotalAppointments")]
+    [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetTotalAppointments(int page = 1, int pageSize = 5,string search = "", string sortColumn = "CreatedAt", string sortOrder = "ASC")    {
         try
@@ -67,7 +67,7 @@ public class AppointmentController : ApiControllerBase
     /// <summary>
     /// Retrieves appointment details by ID.
     /// </summary>
-    [HttpGet("GetAppointmentById/{id}")]
+    [HttpGet("{id}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetAppointmentById(int id)
     {
@@ -92,53 +92,99 @@ public class AppointmentController : ApiControllerBase
     /// <summary>
     /// Deletes an appointment by ID.
     /// </summary>
-    // [HttpDelete("DeleteAppointment/{appointmentId}")]
-    // [AllowAnonymous]
-    // public async Task<IActionResult> DeleteAppointment(int appointmentId)
-    // {
-    //     try
-    //     {
-    //         var result = await _appointmentManager.DeleteAppointment(appointmentId);
-    //         if (result.IsSuccess)
-    //             return Ok(result.Result);
-    //         
-    //         return BadRequest(result.Result);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error in DeleteAppointment");
-    //         return StatusCode(500, ex.Message);
-    //     }
-    // }
+    [HttpDelete("{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> DeleteAppointment(int id)
+    {
+        var appointmentManager = new AppointmentManager();
+        var result = await appointmentManager.DeleteAppointment(id);
+
+        if (result is string && (result.Contains("Cannot delete") || result.Contains("not found")))
+        {
+            return ApiError(result); // Return the error message from the stored procedure
+        }
+
+        return ApiResponse(result); // Success message from the stored procedure
+    }
     //
-    // /// <summary>
-    // /// Updates an existing appointment.
-    // /// </summary>
-    // [HttpPut("UpdateAppointment/{appointmentId}")]
-    // [AllowAnonymous]
-    // public async Task<IActionResult> UpdateAppointment(int appointmentId, [FromBody] AppointmentDetailsViewModel model)
-    // {
-    //     try
-    //     {
-    //         if (appointmentId <= 0)
-    //             return BadRequest("Invalid Appointment Id");
-    //         
-    //         var existingAppointment = await _appointmentManager.GetAppointmentById(appointmentId);
-    //         if (existingAppointment == null)
-    //             return NotFound("Appointment not found");
-    //         
-    //         var result = await _appointmentManager.UpdateAppointment(model, appointmentId);
-    //         if (result)
-    //             return Ok("Appointment updated successfully");
-    //         
-    //         return StatusCode(500, "Failed to update appointment");
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error in UpdateAppointment");
-    //         return StatusCode(500, ex.Message);
-    //     }
-    // }
+    [HttpPut]
+    [AllowAnonymous]
+    public async Task<IActionResult> UpdateAppointment(int appointmentId, AppointmentUpdateViewModel updatedAppointment)
+{
+    // Fetch the existing appointment from the database
+    var existingAppointment = await _appointmentManager.GetAppointmentById(appointmentId);
+    if (existingAppointment == null)
+    {
+        return NotFound(new { message = "Appointment not found" });
+    }
+
+    bool isUpdated = false; // Track if any field is actually updated
+    DateTime? newScheduledTime = null;
+
+    // Handle ScheduledTime update (only if more than 10 minutes difference)
+    if (updatedAppointment.ScheduledTime.HasValue && 
+        updatedAppointment.ScheduledTime.Value != default(DateTime))
+    {
+        var timeDifference = updatedAppointment.ScheduledTime.Value - existingAppointment.ScheduledTime;
+
+        if (Math.Abs(timeDifference.TotalMinutes) > 10)
+        {
+            newScheduledTime = updatedAppointment.ScheduledTime;
+            isUpdated = true;
+        }
+    }
+
+    // Validate Status - Only update if it's different and valid
+    var validStatuses = new HashSet<string>
+    {
+        "Scheduled", "Completed", "Cancelled", "NoShow", "Rescheduled",
+        "Pending", "InProgress", "Confirmed", "Rejected", "AwaitingPayment"
+    };
+
+    string newStatus = null;
+    if (!string.IsNullOrEmpty(updatedAppointment.Status) &&
+        updatedAppointment.Status != "string" &&  // Ignore if input is "string"
+        updatedAppointment.Status != existingAppointment.Status && // Only update if changed
+        validStatuses.Contains(updatedAppointment.Status))
+    {
+        newStatus = updatedAppointment.Status;
+        isUpdated = true;
+    }
+
+    // Ensure VideoCallLink is updated only if it's not "string" and it's different from the existing one
+    string newVideoCallLink = null;
+    if (!string.IsNullOrEmpty(updatedAppointment.VideoCallLink) &&
+        updatedAppointment.VideoCallLink != "string" &&  // Ignore if input is "string"
+        updatedAppointment.VideoCallLink != existingAppointment.VideoCallLink) // Only update if changed
+    {
+        newVideoCallLink = updatedAppointment.VideoCallLink;
+        isUpdated = true;
+    }
+
+    // If no actual changes are detected, return a message
+    if (!isUpdated)
+    {
+        return BadRequest(new { message = "No valid updates provided" });
+    }
+
+    // Prepare the data for the update
+    var updateData = new AppointmentUpdateViewModel
+    {
+        ScheduledTime = newScheduledTime,
+        Status = newStatus,
+        VideoCallLink = newVideoCallLink
+    };
+
+    var result = await _appointmentManager.UpdateAppointment(appointmentId, updateData);
+    if (result)
+    {
+        return Ok(new { message = "Appointment updated successfully" });
+    }
+    else
+    {
+        return BadRequest(new { message = "Failed to update the appointment" });
+    }
+}
     //
     // /// <summary>
     // /// Creates a new appointment.

@@ -1,4 +1,4 @@
-namespace TeleMedicineApp.Areas.Admin.ViewModels;
+namespace TeleMedicineApp.Areas.Admin.Models;
 
 public class AppointmentDetailsViewModel
 {
@@ -10,8 +10,4 @@ public class AppointmentDetailsViewModel
     public string VideoCallLink { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-                
-    // You can include additional properties here, like the doctor's and patient's names, if needed.
-    // public string DoctorName { get; set; }
-    // public string PatientName { get; set; }
 }

@@ -45,14 +45,17 @@ namespace TeleMedicineApp.Areas.Admin.Provider
 
         }
 
-        public async Task<List<DoctorDetailsViewModel>> GetDoctorById(int doctorId)
+        public async Task<DoctorDetailsViewModel> GetDoctorById(int doctorId)
         {
             SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
             IList<KeyValue> param = new List<KeyValue>();
             param.Add(new KeyValue("@DoctorId", doctorId));
-            var result =
-                await sqlHelper.ExecuteAsListAsync<DoctorDetailsViewModel>("[dbo].[usp_Doctors_GetDoctorById]", param);
-            return result;
+    
+            // Use ExecuteAsListAsync to get the result as a list
+            var result = await sqlHelper.ExecuteAsListAsync<DoctorDetailsViewModel>("[dbo].[usp_Doctors_GetDoctorById]", param);
+    
+            // Return the first item from the list or null if no doctor is found
+            return result.FirstOrDefault(); // Will return null if no doctor is found
         }
 
         //     public async Task<OperationResponse<string>> CompleteDoctorDetails(DoctorDetailsViewModel model)
@@ -177,34 +180,44 @@ namespace TeleMedicineApp.Areas.Admin.Provider
             return response;
         }
 
-        [HttpPost("update")]
         public async Task<bool> UpdateDoctor(DoctorDetailsViewModel model, int doctorId)
-        {
-            SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
-            IList<KeyValue> param = new List<KeyValue>
-            {
-                new KeyValue("@DoctorId", doctorId),
-                new KeyValue("@FullName", model.FullName),
-                //new KeyValue("@Email", model.Email),
-                new KeyValue("@PhoneNumber", model.PhoneNumber),
-                new KeyValue("@Gender", model.Gender),
-                new KeyValue("@DateOfBirth", model.DateOfBirth),
-                new KeyValue("@LicenseNumber", model.LicenseNumber),
-                new KeyValue("@MedicalCollege", model.MedicalCollege),
-                new KeyValue("@Specialization", model.Specialization),
-                new KeyValue("@YearsOfExperience", model.YearsOfExperience),
-                new KeyValue("@ClinicName", model.ClinicName),
-                new KeyValue("@ClinicAddress", model.ClinicAddress),
-                new KeyValue("@ConsultationFee", model.ConsultationFee),
-                new KeyValue("@UpdatedAt", DateTime.UtcNow)
-            };
+{
+        SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
 
-            var result = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_UpdateDoctorDetails]", param);
-            return result > 0;
+        // Prepare parameters to pass to the stored procedure
+        IList<KeyValue> param = new List<KeyValue>()
+        {
+            new KeyValue("@DoctorId", doctorId),
+            new KeyValue("@FullName", string.IsNullOrEmpty(model.FullName) ? (object)DBNull.Value : model.FullName),
+            new KeyValue("@PhoneNumber", string.IsNullOrEmpty(model.PhoneNumber) ? (object)DBNull.Value : model.PhoneNumber),
+            new KeyValue("@Gender", string.IsNullOrEmpty(model.Gender) ? (object)DBNull.Value : model.Gender),
+            new KeyValue("@DateOfBirth", model.DateOfBirth ?? (object)DBNull.Value),
+            new KeyValue("@LicenseNumber", string.IsNullOrEmpty(model.LicenseNumber) ? (object)DBNull.Value : model.LicenseNumber),
+            new KeyValue("@MedicalCollege", string.IsNullOrEmpty(model.MedicalCollege) ? (object)DBNull.Value : model.MedicalCollege),
+            new KeyValue("@Specialization", string.IsNullOrEmpty(model.Specialization) ? (object)DBNull.Value : model.Specialization),
+            new KeyValue("@YearsOfExperience", model.YearsOfExperience ?? (object)DBNull.Value),
+            new KeyValue("@ClinicName", string.IsNullOrEmpty(model.ClinicName) ? (object)DBNull.Value : model.ClinicName),
+            new KeyValue("@ClinicAddress", string.IsNullOrEmpty(model.ClinicAddress) ? (object)DBNull.Value : model.ClinicAddress),
+            new KeyValue("@ConsultationFee", model.ConsultationFee ?? (object)DBNull.Value),
+            new KeyValue("@UpdatedAt", DateTime.Now)
+        };
+
+        // Execute stored procedure
+        var result = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_UpdateDoctorDetails]", param);
+
+        // Check if any rows were affected
+        if (result == 0)
+        {
+            Console.WriteLine("Update executed, but no rows modified. This could be because the values were already the same.");
+            return true; // Consider this as a success when no changes were needed
         }
 
+        Console.WriteLine($"Update successful, rows affected: {result}");
+        return result > 0;
+    }
+
         [HttpGet]
-        public async Task<List<AppointmentDetailsViewModel>>GetDoctorAppointments(int doctorId, int offset, int limit)
+        public async Task<List<AppointmentUpdateViewModel>>GetDoctorAppointments(int doctorId, int offset, int limit)
         {
             SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
             IList<KeyValue> param = new List<KeyValue>()
@@ -213,7 +226,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
                 new KeyValue("Offset", offset),
                 new KeyValue("@Limit", limit),
             };
-            var result = await sqlHelper.ExecuteAsListAsync<AppointmentDetailsViewModel>("[dbo].[usp_GetDoctorAppointments]", param);
+            var result = await sqlHelper.ExecuteAsListAsync<AppointmentUpdateViewModel>("[dbo].[usp_GetDoctorAppointments]", param);
             return result;
 
         }

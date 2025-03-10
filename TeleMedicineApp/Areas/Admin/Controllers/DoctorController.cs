@@ -150,13 +150,22 @@ public class DoctorController : ApiControllerBase
             return NotFound("Doctor not found.");
         }
 
+        // Check if the DateOfBirth is the current date or a future date, and don't update it
+        if (model.DateOfBirth.HasValue && model.DateOfBirth.Value.Date >= DateTime.UtcNow.Date)
+        {
+            // If DateOfBirth is the current date or in the future, don't update it.
+            model.DateOfBirth = existingDoctor.DateOfBirth; // Retain the existing DateOfBirth
+        }
+
+        // Proceed with the update logic
         var result = await _doctorManager.UpdateDoctor(model, doctorId);
+    
         if (result)
         {
             return Ok("Doctor updated successfully.");
         }
 
-        return StatusCode(500, "Failed to update doctor.");
+        // If no rows were updated, it could be that the provided values are the same as the existing values.
+        return StatusCode(500, "Update executed, but no rows were modified. This could be because the values were already the same.");
     }
-
 }
