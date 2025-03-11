@@ -128,7 +128,7 @@ public class DoctorController : ApiControllerBase
     public async Task<IActionResult> DeleteDoctor(string userId)
     {
         var result = await _doctorManager.DeleteDoctor(userId);
-        if (result.IsSucess)
+        if (result.IsSuccess)
         {
             return Ok(result.Result);
         }

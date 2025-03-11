@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using TeleMedicineApp.Areas.Admin.Models;
 using TeleMedicineApp.Areas.Admin.Provider;
 using TeleMedicineApp.Areas.Admin.ViewModels;
 using TeleMedicineApp.Controllers;
@@ -110,7 +111,7 @@ public class AppointmentController : ApiControllerBase
     [HttpPut]
     [AllowAnonymous]
     public async Task<IActionResult> UpdateAppointment(int appointmentId, AppointmentUpdateViewModel updatedAppointment)
-{
+    {
     // Fetch the existing appointment from the database
     var existingAppointment = await _appointmentManager.GetAppointmentById(appointmentId);
     if (existingAppointment == null)
@@ -184,30 +185,35 @@ public class AppointmentController : ApiControllerBase
     {
         return BadRequest(new { message = "Failed to update the appointment" });
     }
-}
-    //
-    // /// <summary>
-    // /// Creates a new appointment.
-    // /// </summary>
-    // [HttpPost("CreateAppointment")]
-    // [AllowAnonymous]
-    // public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
-    // {
-    //     try
-    //     {
-    //         if (model == null)
-    //             return BadRequest("Invalid appointment details");
-    //         
-    //         var result = await _appointmentManager.CreateAppointment(model);
-    //         if (result.IsSuccess)
-    //             return Ok("Appointment created successfully");
-    //         
-    //         return BadRequest(result.Result);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error in CreateAppointment");
-    //         return StatusCode(500, ex.Message);
-    //     }
-    // }
+    }
+    
+    
+    [HttpPost]
+    [AllowAnonymous]
+    public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
+    {
+        try
+        {
+            if (model == null)
+                return BadRequest("Invalid appointment details");
+
+            string username = User.Identity?.Name ?? "StaticUser";
+            var result = await _appointmentManager.CreateAppointment(model, username);  
+
+            // Check if the result is successful and send the appropriate success message
+            if (result.IsSuccess)
+            {
+                // Return the success message from the result or a custom success message
+                return Ok(new { message = result.ResultMessage ?? "Appointment created successfully." });
+            }
+
+            // If the operation failed, return the error message
+            return BadRequest(new { message = result.ErrorMessage });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while creating the appointment");
+            return StatusCode(500, new { message = "An error occurred while creating the appointment" });
+        }
+    }
 }
