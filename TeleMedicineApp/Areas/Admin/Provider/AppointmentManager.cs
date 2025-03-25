@@ -7,8 +7,15 @@ namespace TeleMedicineApp.Areas.Admin.Provider;
 
 public class AppointmentManager
 {
+    private readonly DoctorManager _doctorManager; // Declare the dependency
+
+    // Constructor with DoctorManager injection
+    public AppointmentManager(DoctorManager doctorManager)
+    {
+        _doctorManager = doctorManager; // Initialize the dependency
+    }
     [HttpGet]
-    public async Task<List<AppointmentDetailsViewModel>> GetTotalAppointments(int offset, int limit,
+    public async Task<List<AppointmentUpdateViewModel>> GetTotalAppointments(int offset, int limit,
         string searchKeyword = "", string sortColumn = "CreatedAt", string sortOrder = "ASC")
     {
         SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
@@ -19,22 +26,23 @@ public class AppointmentManager
         param.Add(new KeyValue("@SortColumn", sortColumn));
         param.Add(new KeyValue("@SortOrder", sortOrder));
         
-        var result = await sqlHelper.ExecuteAsListAsync<AppointmentDetailsViewModel>("[dbo].[usp_GetTotalAppointments]", param);
+        var result = await sqlHelper.ExecuteAsListAsync<AppointmentUpdateViewModel>("[dbo].[usp_GetTotalAppointments]", param);
         return result;
 
     }
 
 
     [HttpGet]
-    public async Task<AppointmentDetailsViewModel> GetAppointmentById(int id)
+    public async Task<AppointmentDetailsViewModel> GetAppointmentById(int userId)
     {
         SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
         IList<KeyValue> param = new List<KeyValue>();
-        param.Add(new KeyValue("@AppointmentId", id));
+        param.Add(new KeyValue("@AppointmentId", userId));
         var result = await sqlHelper.ExecuteAsListAsync<AppointmentDetailsViewModel>("[dbo].[usp_GetAppointmentById]", param);
         return result.FirstOrDefault();;
 
     }
+    
 
     public async Task<String> DeleteAppointment(int id)
     {
@@ -56,11 +64,14 @@ public class AppointmentManager
         IList<KeyValue> param = new List<KeyValue>()
         {
             new KeyValue("@AppointmentId", appointmentId),
-            new KeyValue("@ScheduledTime", updatedAppointment.ScheduledTime ?? (object)DBNull.Value),
-            new KeyValue("@Status", string.IsNullOrEmpty(updatedAppointment.Status) ? (object)DBNull.Value : updatedAppointment.Status),
-            new KeyValue("@VideoCallLink", string.IsNullOrEmpty(updatedAppointment.VideoCallLink) ? (object)DBNull.Value : updatedAppointment.VideoCallLink)
+            new KeyValue("@DoctorName", updatedAppointment.DoctorName),
+            new KeyValue("@PatientName", updatedAppointment.PatientName),
+            new KeyValue("@Status", updatedAppointment.Status),
+            new KeyValue("@ScheduledTime", updatedAppointment.ScheduledTime),
+            new KeyValue("@VideoCallLink", updatedAppointment.VideoCallLink),
         };
 
+        // Execute the stored procedure
         var result = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_UpdateAppointment]", param);
 
         if (result == 0)
@@ -71,7 +82,6 @@ public class AppointmentManager
 
         Console.WriteLine($"Update successful, rows affected: {result}");
         return result > 0;
-    
     }
 
     public async Task<OperationResponse<string>> CreateAppointment(AppointmentDetailsViewModel appointment, string username)
@@ -81,8 +91,8 @@ public class AppointmentManager
         IList<KeyValue> param = new List<KeyValue>();
 
         // Prepare parameters for the stored procedure
-        param.Add(new KeyValue("@DoctorId", appointment.DoctorId));
-        param.Add(new KeyValue("@PatientId", appointment.PatientId));
+        param.Add(new KeyValue("@DoctorId", appointment.DoctorName));
+        param.Add(new KeyValue("@PatientId", appointment.PatientName));
         param.Add(new KeyValue("@ScheduledTime", appointment.ScheduledTime));
         param.Add(new KeyValue("@Status", appointment.Status));
         param.Add(new KeyValue("@VideoCallLink", appointment.VideoCallLink));
@@ -102,5 +112,35 @@ public class AppointmentManager
         }
 
         return response;
+    }
+    
+    public async Task<List<AppointmentDetailsViewModel>> GetAppointmentsByDoctorUserId(string userId)
+    {
+        SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
+        IList<KeyValue> param = new List<KeyValue>
+        {
+            new KeyValue("@UserId", userId)
+        };
+
+        // Execute the stored procedure to get appointments by userId (doctor)
+        var result = await sqlHelper.ExecuteAsListAsync<AppointmentDetailsViewModel>("[dbo].[usp_GetAppointmentsByDoctorUserId]", param);
+        return result;
+    }
+    public async Task<bool> HasAppointments(int doctorId)
+    {
+        // Get the userId using the doctorId
+        var response = await _doctorManager.GetUserIdByDoctorId(doctorId);
+        string userId = response.Result;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return false; // Return false if no userId is found for the given doctorId
+        }
+
+        // Fetch all appointments for the given userId
+        var appointments = await GetAppointmentsByDoctorUserId(userId);
+
+        // Check if there are any appointments for the given userId (doctor)
+        return appointments != null && appointments.Any();
     }
 }

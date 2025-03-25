@@ -23,6 +23,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
         {
             _userManager = userManager;
             _context = context;
+            
         }
 
         public async Task<List<DoctorDetailsViewModel>> GetTotalDoctors(int offset, int limit,
@@ -127,50 +128,27 @@ namespace TeleMedicineApp.Areas.Admin.Provider
         // }
         public async Task<OperationResponse<string>> DeleteDoctor(string userId)
         {
-            OperationResponse<string> response = new OperationResponse<string>();
+            var response = new OperationResponse<string>();
 
             try
             {
-                // Check if the user exists in AspNetUsers table
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                {
-                    response.Result = "Doctor not found.";
-                    return response;
-                }
-
-                // Remove the user from the Doctor role (optional, but good practice)
-                var roles = await _userManager.GetRolesAsync(user);
-                if (roles.Contains("Doctor"))
-                {
-                    await _userManager.RemoveFromRoleAsync(user, "Doctor");
-                }
-
-                // Delete the doctor details from the DoctorDetails table
                 SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
                 IList<KeyValue> param = new List<KeyValue>
                 {
                     new KeyValue("@UserId", userId)
                 };
-        
-                // Execute the stored procedure to delete doctor details
-                int doctorDeleteStatus = await sqlHelper.ExecuteNonQueryAsync("[dbo].[usp_DeleteDoctorDetails]", param, "@OpStatus");
-                if (doctorDeleteStatus <= 0)
-                {
-                    response.Result = "Error: Doctor details could not be deleted.";
-                    return response;
-                }
 
-                // Delete the user from AspNetUsers table
-                var deleteUserResult = await _userManager.DeleteAsync(user);
-                if (!deleteUserResult.Succeeded)
-                {
-                    response.Result = "Error deleting user: " + string.Join(", ", deleteUserResult.Errors.Select(e => e.Description));
-                    return response;
-                }
+                // Execute the stored procedure and get the result
+                int opStatus = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_DeleteDoctorDetails]", param);
 
-                // If everything is successful
-                response.Result = "Doctor deleted successfully.";
+                if (opStatus == 1)
+                {
+                    response.Result = "Doctor deleted successfully.";
+                }
+                else
+                {
+                    response.Result = "Error: Doctor deletion failed. Either the doctor was not found, or the user was not deleted.";
+                }
             }
             catch (Exception ex)
             {
@@ -179,7 +157,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
 
             return response;
         }
-
+    
         public async Task<bool> UpdateDoctor(DoctorDetailsViewModel model, int doctorId)
 {
         SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
@@ -230,6 +208,42 @@ namespace TeleMedicineApp.Areas.Admin.Provider
             return result;
 
         }
+        public async Task<OperationResponse<string>> GetUserIdByDoctorId(int doctorId)
+        {
+            var response = new OperationResponse<string>();
+            try
+            {
+                SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
+
+                // Prepare the parameters for the stored procedure
+                IList<KeyValue> param = new List<KeyValue>
+                {
+                    new KeyValue("@DoctorId", doctorId)
+                };
+
+                // Execute the stored procedure to get the userId
+                var result = await sqlHelper.ExecuteAsScalarAsync<string>("[dbo].[usp_GetUserIdByDoctorId]", param);
+
+                // If result is null, return an appropriate error message
+                if (string.IsNullOrEmpty(result))
+                {
+                    response.Result = "Doctor not found or no userId associated with this doctor.";
+                }
+                else
+                {
+                    response.Result = result; // Return the userId as the result
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Result = "Error: " + ex.Message;
+            }
+
+            return response;
+        }
 
     }
+    
+    
+
 }

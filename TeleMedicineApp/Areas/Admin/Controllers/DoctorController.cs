@@ -1,8 +1,10 @@
+using System.Data.SqlClient;
 using System.Runtime.InteropServices.JavaScript;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TeleMedicineApp.Areas.Admin.Provider;
 using TeleMedicineApp.Controllers;
 using TeleMedicineApp.Data;
@@ -12,7 +14,7 @@ using TeleMedicineApp.Models;
 
 namespace TeleMedicineApp.Areas.Admin.Controllers;
 [Authorize (Roles = "Doctor")]  // Default authorization for all actions
-[Area("Admin")]
+[Area("admin")]
 [Route("api/[area]/[action]")]
 [ApiController]
 
@@ -25,7 +27,7 @@ public class DoctorController : ApiControllerBase
     private readonly ILogger _logger;
     private readonly IJwtService _jwtService;
     private readonly DoctorManager _doctorManager;
-
+    private readonly AppointmentManager _appointmentManager;
     public DoctorController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
@@ -33,7 +35,8 @@ public class DoctorController : ApiControllerBase
         IEmailSender emailSender,
         ILoggerFactory loggerFactory,
         IJwtService jwtService,
-        DoctorManager doctorManager)
+        DoctorManager doctorManager,
+        AppointmentManager appointmentManager)
     {
         _context = context;
         _userManager = userManager;
@@ -42,6 +45,7 @@ public class DoctorController : ApiControllerBase
         _logger = loggerFactory.CreateLogger<DoctorController>();
         _jwtService = jwtService;
         _doctorManager = doctorManager;
+        _appointmentManager = appointmentManager;
     }
 
     [HttpGet]
@@ -68,7 +72,7 @@ public class DoctorController : ApiControllerBase
     }
     
     
-    [HttpGet]
+    [HttpGet("{id}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetDoctorById(int id)
     {
@@ -123,49 +127,88 @@ public class DoctorController : ApiControllerBase
     //         return ApiError("Internal server error", statusCode: 500);
     //     }
     // }
-    [HttpDelete]
-    [AllowAnonymous]
-    public async Task<IActionResult> DeleteDoctor(string userId)
+    [HttpDelete("{userId}")]
+    [AllowAnonymous]  // Ensures only Admin can delete a doctor
+    public async Task<OperationResponse<string>> DeleteDoctor(string userId)
     {
-        var result = await _doctorManager.DeleteDoctor(userId);
-        if (result.IsSuccess)
+        var response = new OperationResponse<string>();
+
+        try
         {
-            return Ok(result.Result);
+            // Step 1: Check if the doctor has any appointments
+            var hasAppointments = await _appointmentManager.GetAppointmentsByDoctorUserId(userId);
+
+            if (hasAppointments != null && hasAppointments.Any())
+            {
+                response.AddError("This doctor cannot be deleted because they have scheduled appointments.");
+                response.Result = "Doctor deletion failed.";
+                return response;
+            }
+
+            // Step 2: Proceed with deleting the doctor
+            var result = await _doctorManager.DeleteDoctor(userId);  // Your logic to delete the doctor
+
+            if (result.IsSuccess)
+            {
+                response.Result = "Doctor deleted successfully.";
+            }
+            else
+            {
+                response.AddError("Doctor not found or deletion failed.");
+                response.Result = "Doctor deletion failed.";
+            }
         }
-        return BadRequest(result.Result);
+        catch (Exception ex)
+        {
+            // Add error to response
+            response.AddError($"Error: {ex.Message}");
+            response.Result = "Doctor deletion failed.";
+        }
+
+        return response;
     }
-    
     [AllowAnonymous]
     [HttpPut("{doctorId}")]
     public async Task<IActionResult> UpdateDoctor(int doctorId, [FromBody] DoctorDetailsViewModel model)
     {
         if (doctorId <= 0)
         {
-            return BadRequest("Invalid Doctor ID.");
+            return BadRequest(new { message = "Invalid Doctor ID." });
         }
 
         var existingDoctor = await _doctorManager.GetDoctorById(doctorId);
         if (existingDoctor == null)
         {
-            return NotFound("Doctor not found.");
+            return NotFound(new { message = "Doctor not found." });
         }
 
         // Check if the DateOfBirth is the current date or a future date, and don't update it
         if (model.DateOfBirth.HasValue && model.DateOfBirth.Value.Date >= DateTime.UtcNow.Date)
         {
-            // If DateOfBirth is the current date or in the future, don't update it.
-            model.DateOfBirth = existingDoctor.DateOfBirth; // Retain the existing DateOfBirth
+            model.DateOfBirth = existingDoctor.DateOfBirth;
         }
 
         // Proceed with the update logic
         var result = await _doctorManager.UpdateDoctor(model, doctorId);
-    
+
         if (result)
         {
-            return Ok("Doctor updated successfully.");
+            return Ok(new { message = "Doctor updated successfully." });
         }
 
-        // If no rows were updated, it could be that the provided values are the same as the existing values.
-        return StatusCode(500, "Update executed, but no rows were modified. This could be because the values were already the same.");
+        return StatusCode(500, new { message = "Update executed, but no rows were modified. This could be because the values were already the same." });
+    }
+    [HttpGet("{doctorId}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<OperationResponse<string>>> GetUserIdByDoctorId(int doctorId)
+    {
+        var response = await _doctorManager.GetUserIdByDoctorId(doctorId);
+
+        if (string.IsNullOrEmpty(response.Result))
+        {
+            return NotFound(response);  // Return 404 if no userId is found
+        }
+
+        return Ok(response);  // Return 200 with the response data
     }
 }

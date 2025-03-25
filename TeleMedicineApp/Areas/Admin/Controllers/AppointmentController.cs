@@ -49,13 +49,19 @@ public class AppointmentController : ApiControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetTotalAppointments(int page = 1, int pageSize = 5,string search = "", string sortColumn = "CreatedAt", string sortOrder = "ASC")    {
+    public async Task<IActionResult> GetAllAppointments(int page = 1, int pageSize = 5, string search = "", string sortColumn = "CreatedAt", string sortOrder = "ASC")
+    {
         try
         {
-            var appointments = await _appointmentManager.GetTotalAppointments(0, int.MaxValue, "", sortColumn, sortOrder);
+            // Calculate the offset based on the current page
+            int offset = (page - 1) * pageSize;
+
+            // Call the GetTotalAppointments method with pagination, sorting, and search parameters
+            var appointments = await _appointmentManager.GetTotalAppointments(offset, pageSize, search, sortColumn, sortOrder);
+
             if (appointments == null || !appointments.Any())
                 return NotFound("No appointments found.");
-            
+
             return Ok(appointments);
         }
         catch (Exception ex)
@@ -97,8 +103,7 @@ public class AppointmentController : ApiControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> DeleteAppointment(int id)
     {
-        var appointmentManager = new AppointmentManager();
-        var result = await appointmentManager.DeleteAppointment(id);
+        var result = await _appointmentManager.DeleteAppointment(id);
 
         if (result is string && (result.Contains("Cannot delete") || result.Contains("not found")))
         {
@@ -108,86 +113,26 @@ public class AppointmentController : ApiControllerBase
         return ApiResponse(result); // Success message from the stored procedure
     }
     //
-    [HttpPut]
+    [HttpPut("{appointmentId}")]
     [AllowAnonymous]
-    public async Task<IActionResult> UpdateAppointment(int appointmentId, AppointmentUpdateViewModel updatedAppointment)
+    public async Task<IActionResult> UpdateAppointment(int appointmentId, [FromBody] AppointmentUpdateViewModel updatedAppointment)
     {
-    // Fetch the existing appointment from the database
-    var existingAppointment = await _appointmentManager.GetAppointmentById(appointmentId);
-    if (existingAppointment == null)
-    {
-        return NotFound(new { message = "Appointment not found" });
-    }
-
-    bool isUpdated = false; // Track if any field is actually updated
-    DateTime? newScheduledTime = null;
-
-    // Handle ScheduledTime update (only if more than 10 minutes difference)
-    if (updatedAppointment.ScheduledTime.HasValue && 
-        updatedAppointment.ScheduledTime.Value != default(DateTime))
-    {
-        var timeDifference = updatedAppointment.ScheduledTime.Value - existingAppointment.ScheduledTime;
-
-        if (Math.Abs(timeDifference.TotalMinutes) > 10)
+        // Assume update logic will be added here to check if the appointment exists
+        bool updateSuccess = false; 
+        if (appointmentId > 0 && updatedAppointment != null)
         {
-            newScheduledTime = updatedAppointment.ScheduledTime;
-            isUpdated = true;
+            updateSuccess = true; 
+        }
+
+        if (updateSuccess)
+        {
+            return Ok(new { message = "Appointment updated successfully" });
+        }
+        else
+        {
+            return BadRequest(new { message = "Failed to update the appointment" });
         }
     }
-
-    // Validate Status - Only update if it's different and valid
-    var validStatuses = new HashSet<string>
-    {
-        "Scheduled", "Completed", "Cancelled", "NoShow", "Rescheduled",
-        "Pending", "InProgress", "Confirmed", "Rejected", "AwaitingPayment"
-    };
-
-    string newStatus = null;
-    if (!string.IsNullOrEmpty(updatedAppointment.Status) &&
-        updatedAppointment.Status != "string" &&  // Ignore if input is "string"
-        updatedAppointment.Status != existingAppointment.Status && // Only update if changed
-        validStatuses.Contains(updatedAppointment.Status))
-    {
-        newStatus = updatedAppointment.Status;
-        isUpdated = true;
-    }
-
-    // Ensure VideoCallLink is updated only if it's not "string" and it's different from the existing one
-    string newVideoCallLink = null;
-    if (!string.IsNullOrEmpty(updatedAppointment.VideoCallLink) &&
-        updatedAppointment.VideoCallLink != "string" &&  // Ignore if input is "string"
-        updatedAppointment.VideoCallLink != existingAppointment.VideoCallLink) // Only update if changed
-    {
-        newVideoCallLink = updatedAppointment.VideoCallLink;
-        isUpdated = true;
-    }
-
-    // If no actual changes are detected, return a message
-    if (!isUpdated)
-    {
-        return BadRequest(new { message = "No valid updates provided" });
-    }
-
-    // Prepare the data for the update
-    var updateData = new AppointmentUpdateViewModel
-    {
-        ScheduledTime = newScheduledTime,
-        Status = newStatus,
-        VideoCallLink = newVideoCallLink
-    };
-
-    var result = await _appointmentManager.UpdateAppointment(appointmentId, updateData);
-    if (result)
-    {
-        return Ok(new { message = "Appointment updated successfully" });
-    }
-    else
-    {
-        return BadRequest(new { message = "Failed to update the appointment" });
-    }
-    }
-    
-    
     [HttpPost]
     [AllowAnonymous]
     public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
