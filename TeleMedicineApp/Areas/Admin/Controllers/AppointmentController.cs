@@ -135,6 +135,7 @@ public class AppointmentController : ApiControllerBase
     }
     [HttpPost]
     [AllowAnonymous]
+    [HttpPost("CreateAppointment")]
     public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
     {
         try
@@ -142,13 +143,21 @@ public class AppointmentController : ApiControllerBase
             if (model == null)
                 return BadRequest("Invalid appointment details");
 
+            // Validate the model
+            if (!model.IsValid())
+                return BadRequest("Invalid appointment details");
+
+            // Normalize ScheduledTime to remove seconds and milliseconds
+            model.NormalizeScheduledTime();
+
             string username = User.Identity?.Name ?? "StaticUser";
+
+            // Call backend logic to create appointment
             var result = await _appointmentManager.CreateAppointment(model, username);  
 
             // Check if the result is successful and send the appropriate success message
             if (result.IsSuccess)
             {
-                // Return the success message from the result or a custom success message
                 return Ok(new { message = result.ResultMessage ?? "Appointment created successfully." });
             }
 

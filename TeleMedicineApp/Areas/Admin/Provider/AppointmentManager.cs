@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using SQLHelper;
 using TeleMedicineApp.Areas.Admin.Models;
@@ -86,34 +87,40 @@ public class AppointmentManager
 
     public async Task<OperationResponse<string>> CreateAppointment(AppointmentDetailsViewModel appointment, string username)
     {
-        OperationResponse<string> response = new OperationResponse<string>();
-        SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
-        IList<KeyValue> param = new List<KeyValue>();
-
-        // Prepare parameters for the stored procedure
-        param.Add(new KeyValue("@DoctorId", appointment.DoctorName));
-        param.Add(new KeyValue("@PatientId", appointment.PatientName));
-        param.Add(new KeyValue("@ScheduledTime", appointment.ScheduledTime));
-        param.Add(new KeyValue("@Status", appointment.Status));
-        param.Add(new KeyValue("@VideoCallLink", appointment.VideoCallLink));
-        //param.Add(new KeyValue("@CreatedAt", appointment.CreatedAt));
-        param.Add(new KeyValue("@AddedBy", username)); // AddedBy parameter to track who created the appointment
-
-        // Execute the stored procedure and get the result (AppointmentId)
-        var appointmentId = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_CreateAppointment]", param);
-
-        if (appointmentId > 0)
+        var response = new OperationResponse<string>();
+        try
         {
-            response.Result = "Appointment Created Successfully with ID: " + appointmentId;
+            SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
+            IList<KeyValue> param = new List<KeyValue>();
+
+            // Prepare parameters for the stored procedure
+            param.Add(new KeyValue("@DoctorName", appointment.DoctorName));
+            param.Add(new KeyValue("@PatientName", appointment.PatientName));
+            param.Add(new KeyValue("@ScheduledTime", appointment.ScheduledTime));
+            param.Add(new KeyValue("@VideoCallLink", appointment.VideoCallLink));
+            param.Add(new KeyValue("@AddedBy", username));
+
+            // Execute the stored procedure and retrieve the newly created appointment ID
+            var appointmentId = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_CreateAppointment]", param);
+
+            // Check if appointment creation was successful
+            if (appointmentId > 0)
+            {
+                response.Result = $"Appointment Created Successfully with ID: {appointmentId}";
+                response.ResultMessage = "Success";
+            }
+            else
+            {
+                response.AddError("Failed to create appointment.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            response.Result = "Appointment Creation Failed";
+            response.AddError($"Exception: {ex.Message}");
         }
 
         return response;
     }
-    
     public async Task<List<AppointmentDetailsViewModel>> GetAppointmentsByDoctorUserId(string userId)
     {
         SQLHandlerAsync sqlHelper = new SQLHandlerAsync();

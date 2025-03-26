@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
         builder =>
         {
             builder
-                .WithOrigins("http://localhost:3000","http://localhost:5174") // React app origin
+                .WithOrigins("http://localhost:3000","http://localhost:5175") // React app origin
                 .AllowAnyMethod() // Allow all HTTP methods (GET, POST, etc.)
                 .AllowAnyHeader() // Allow all headers
                 .AllowCredentials(); // Allow cookies/credentials if needed
