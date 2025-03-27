@@ -9,7 +9,7 @@ using TeleMedicineApp.Controllers;
 using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Doctor.Controllers;
-[Authorize (Roles = "Doctor")]  // Default authorization for all actions
+[Authorize (Roles = "SuperAdmin")]  // Default authorization for all actions
 [Area("Doctor")]
 [Route("api/[area]/[action]")]
 [ApiController]
@@ -35,10 +35,66 @@ public class AccountController : ApiControllerBase
         _logger = loggerFactory.CreateLogger<AccountController>();
         
     }
+    
+    // Register Doctor
+    [HttpPost]
+    [AllowAnonymous]
+    public async Task<IActionResult> RegisterDoctor([FromBody] RegisterDoctorDTO registerDoctorDTO)
+    {
+        // Validate passwords match
+        if (registerDoctorDTO.Password != registerDoctorDTO.ConfirmPassword)
+        {
+            return BadRequest("Passwords do not match.");
+        }
+
+        // Check if email exists
+        var existingUser = await _userManager.FindByEmailAsync(registerDoctorDTO.Email);
+        if (existingUser != null)
+        {
+            return BadRequest("Email is already in use.");
+        }
+
+        // Create User
+        var user = new ApplicationUser
+        {
+            UserName = registerDoctorDTO.Email,
+            Email = registerDoctorDTO.Email
+        };
+
+        var result = await _userManager.CreateAsync(user, registerDoctorDTO.Password);
+        if (!result.Succeeded)
+        {
+            return BadRequest("User registration failed.");
+        }
+
+        // Add User to DoctorDetails table
+        var doctorDetails = new DoctorDetails
+        {
+            UserId = user.Id,
+            FullName = registerDoctorDTO.FullName,
+            PhoneNumber = registerDoctorDTO.PhoneNumber,
+            Gender = registerDoctorDTO.Gender,
+            DateOfBirth = registerDoctorDTO.DateOfBirth,
+            LicenseNumber = registerDoctorDTO.LicenseNumber,
+            MedicalCollege = registerDoctorDTO.MedicalCollege,
+            Specialization = registerDoctorDTO.Specialization,
+            YearsOfExperience = registerDoctorDTO.YearsOfExperience,
+            ClinicName = registerDoctorDTO.ClinicName,
+            ClinicAddress = registerDoctorDTO.ClinicAddress,
+            ConsultationFee = registerDoctorDTO.ConsultationFee,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.DoctorDetails.Add(doctorDetails);
+        await _context.SaveChangesAsync();
+
+        return Ok("Doctor registered successfully.");
+    }
 
     
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> CompleteDoctorDetails(DoctorRegistrationViewModel model)
     {
         try
