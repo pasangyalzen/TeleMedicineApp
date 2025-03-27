@@ -117,25 +117,28 @@ public class AppointmentController : ApiControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> UpdateAppointment(int appointmentId, [FromBody] AppointmentUpdateViewModel updatedAppointment)
     {
-        // Assume update logic will be added here to check if the appointment exists
-        bool updateSuccess = false; 
-        if (appointmentId > 0 && updatedAppointment != null)
+        // Validation for appointmentId and updatedAppointment
+        if (appointmentId <= 0 || updatedAppointment == null)
         {
-            updateSuccess = true; 
+            return BadRequest(new { message = "Invalid data. Appointment ID or updated data is missing." });
         }
 
+        // Call the service method to update the appointment in the database
+        bool updateSuccess = await _appointmentManager.UpdateAppointment(appointmentId, updatedAppointment);
+
+        // Return appropriate response based on the success of the update operation
         if (updateSuccess)
         {
             return Ok(new { message = "Appointment updated successfully" });
         }
         else
         {
-            return BadRequest(new { message = "Failed to update the appointment" });
+            return BadRequest(new { message = "Failed to update the appointment. No rows were modified." });
         }
     }
-    [HttpPost]
+    
     [AllowAnonymous]
-    [HttpPost("CreateAppointment")]
+    [HttpPost]
     public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
     {
         try

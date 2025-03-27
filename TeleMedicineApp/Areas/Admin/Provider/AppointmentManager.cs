@@ -1,8 +1,10 @@
 using System.Data;
+using Azure;
 using Microsoft.AspNetCore.Mvc;
 using SQLHelper;
 using TeleMedicineApp.Areas.Admin.Models;
 using TeleMedicineApp.Areas.Admin.ViewModels;
+using TeleMedicineApp.Models;
 
 namespace TeleMedicineApp.Areas.Admin.Provider;
 
@@ -34,16 +36,35 @@ public class AppointmentManager
 
 
     [HttpGet]
-    public async Task<AppointmentDetailsViewModel> GetAppointmentById(int userId)
+    public async Task<AppointmentUpdateViewModel> GetAppointmentById(int userId)
     {
         SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
         IList<KeyValue> param = new List<KeyValue>();
         param.Add(new KeyValue("@AppointmentId", userId));
-        var result = await sqlHelper.ExecuteAsListAsync<AppointmentDetailsViewModel>("[dbo].[usp_GetAppointmentById]", param);
+        var result = await sqlHelper.ExecuteAsListAsync<AppointmentUpdateViewModel>("[dbo].[usp_GetAppointmentById]", param);
         return result.FirstOrDefault();;
 
     }
-    
+    // [HttpPost]
+    // public async Task<IActionResult> UpdateAppointmentStatus(int appointmentId, string newStatus)
+    // {
+    //     SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
+    //     IList<KeyValue> param = new List<KeyValue>();
+    //     param.Add(new KeyValue("@AppointmentId", appointmentId));
+    //     param.Add(new KeyValue("@NewStatus", newStatus));
+    //
+    //     var response = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_UpdateAppointmentStatus]", param);
+    //
+    //     if (response > 0)
+    //     {
+    //         return ApiResponse("Appointment status updated successfully");
+    //     }
+    //     else
+    //     {
+    //         return BadRequest(new { message = "Failed to update appointment status." });
+    //     }
+    // }
+    //
 
     public async Task<String> DeleteAppointment(int id)
     {
