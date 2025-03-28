@@ -4,7 +4,7 @@ using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Patient.Models
 {
-    public class PatientDetails
+    public class PatientUpdateViewModel
     {
         [Key]
         public int PatientId { get; set; }
@@ -23,8 +23,8 @@ namespace TeleMedicineApp.Areas.Patient.Models
         [RegularExpression("^(Male|Female|Other)$", ErrorMessage = "Gender must be 'Male', 'Female', or 'Other'.")]
         public string Gender { get; set; }
 
-        [Required]
-        public DateTime DateOfBirth { get; set; }
+        
+        public DateTime? DateOfBirth { get; set; }
 
         [StringLength(10)]
         public string BloodGroup { get; set; }

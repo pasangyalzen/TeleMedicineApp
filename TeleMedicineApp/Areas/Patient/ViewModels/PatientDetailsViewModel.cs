@@ -4,14 +4,14 @@ using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Patient.Models
 {
-    public class PatientDetails
+    public class PatientDetailsViewModel
     {
         [Key]
         public int PatientId { get; set; }
 
         [Required]
         public string UserId { get; set; }
-        public ApplicationUser User { get; set; }
+        //public ApplicationUser User { get; set; }
 
         [Required, StringLength(255)]
         public string FullName { get; set; }
