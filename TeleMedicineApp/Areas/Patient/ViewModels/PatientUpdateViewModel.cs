@@ -1,29 +1,19 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using TeleMedicineApp.Data;
 
-namespace TeleMedicineApp.Areas.Patient.Models
+namespace TeleMedicineApp.Areas.Patient.ViewModels
 {
     public class PatientUpdateViewModel
     {
-        [Key]
-        public int PatientId { get; set; }
-
-        [Required]
-        public string UserId { get; set; }
-        public ApplicationUser User { get; set; }
-
-        [Required, StringLength(255)]
+        [StringLength(255)]
         public string FullName { get; set; }
 
-        [Required, Phone]
+        [Phone]
         public string PhoneNumber { get; set; }
 
-        [Required]
         [RegularExpression("^(Male|Female|Other)$", ErrorMessage = "Gender must be 'Male', 'Female', or 'Other'.")]
         public string Gender { get; set; }
 
-        
         public DateTime? DateOfBirth { get; set; }
 
         [StringLength(10)]
@@ -46,7 +36,6 @@ namespace TeleMedicineApp.Areas.Patient.Models
         [Url]
         public string ProfileImage { get; set; }
 
-        // Newly Added Fields
         [StringLength(50)]
         public string MaritalStatus { get; set; }
 
@@ -54,8 +43,6 @@ namespace TeleMedicineApp.Areas.Patient.Models
         public string ChronicDiseases { get; set; }
         public string Medications { get; set; }
 
-        public bool Status { get; set; } = true; // Active by default
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; }
+        public bool? Status { get; set; } = true; // Active by default
     }
 }

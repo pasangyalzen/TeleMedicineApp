@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SQLHelper;
 using TeleMedicineApp.Areas.Admin.ViewModels;
+using TeleMedicineApp.Areas.Patient.ViewModels;
 using TeleMedicineApp.Areas.Patient.Models;
 using TeleMedicineApp.Data;
 using TeleMedicineApp.Models;
@@ -114,26 +115,40 @@ namespace TeleMedicineApp.Areas.Admin.Provider
         }
 
         // Update patient details
-        public async Task<bool> UpdatePatient(PatientUpdateViewModel model, int patientId)
+        public async Task<bool> UpdatePatientDetails(PatientUpdateViewModel model, int patientId)
         {
             SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
 
             IList<KeyValue> param = new List<KeyValue>
             {
                 new KeyValue("@PatientId", patientId),
-                new KeyValue("@FullName", string.IsNullOrEmpty(model.FullName) ? (object)DBNull.Value : model.FullName),
-                new KeyValue("@PhoneNumber", string.IsNullOrEmpty(model.PhoneNumber) ? (object)DBNull.Value : model.PhoneNumber),
-                new KeyValue("@Gender", string.IsNullOrEmpty(model.Gender) ? (object)DBNull.Value : model.Gender),
+                new KeyValue("@FullName", model.FullName ?? (object)DBNull.Value),
+                new KeyValue("@PhoneNumber", model.PhoneNumber ?? (object)DBNull.Value),
+                new KeyValue("@Gender", model.Gender ?? (object)DBNull.Value),
                 new KeyValue("@DateOfBirth", model.DateOfBirth ?? (object)DBNull.Value),
-                new KeyValue("@BloodGroup", string.IsNullOrEmpty(model.BloodGroup) ? (object)DBNull.Value : model.BloodGroup),
-                new KeyValue("@EmergencyContactName", string.IsNullOrEmpty(model.EmergencyContactName) ? (object)DBNull.Value : model.EmergencyContactName),
-                new KeyValue("@EmergencyContactNumber", string.IsNullOrEmpty(model.EmergencyContactNumber) ? (object)DBNull.Value : model.EmergencyContactNumber),
-                new KeyValue("@MedicalHistory", string.IsNullOrEmpty(model.MedicalHistory) ? (object)DBNull.Value : model.MedicalHistory),
-                new KeyValue("@UpdatedAt", DateTime.Now)
+                new KeyValue("@BloodGroup", model.BloodGroup ?? (object)DBNull.Value),
+                new KeyValue("@Address", model.Address ?? (object)DBNull.Value),
+                new KeyValue("@EmergencyContactName", model.EmergencyContactName ?? (object)DBNull.Value),
+                new KeyValue("@EmergencyContactNumber", model.EmergencyContactNumber ?? (object)DBNull.Value),
+                new KeyValue("@HealthInsuranceProvider", model.HealthInsuranceProvider ?? (object)DBNull.Value),
+                new KeyValue("@MedicalHistory", model.MedicalHistory ?? (object)DBNull.Value),
+                new KeyValue("@ProfileImage", model.ProfileImage ?? (object)DBNull.Value),
+                new KeyValue("@MaritalStatus", model.MaritalStatus ?? (object)DBNull.Value),
+                new KeyValue("@Allergies", model.Allergies ?? (object)DBNull.Value),
+                new KeyValue("@ChronicDiseases", model.ChronicDiseases ?? (object)DBNull.Value),
+                new KeyValue("@Medications", model.Medications ?? (object)DBNull.Value),
+                new KeyValue("@Status", model.Status ?? (object)DBNull.Value)
             };
 
             var result = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_UpdatePatientDetails]", param);
 
+            if (result == 0)
+            {
+                Console.WriteLine("Update executed, but no rows modified. This could be because the values were already the same.");
+                return true; // Consider this as a success when no changes were needed
+            }
+
+            Console.WriteLine($"Update successful, rows affected: {result}");
             return result > 0;
         }
 

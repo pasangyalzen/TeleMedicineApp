@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using TeleMedicineApp.Areas.Admin.Provider;
 using TeleMedicineApp.Areas.Doctor.Models;
 using TeleMedicineApp.Areas.Doctor.ViewModels;
 using TeleMedicineApp.Areas.Patient.Models;
+using TeleMedicineApp.Areas.Patient.ViewModels;
 using TeleMedicineApp.Controllers;
 using TeleMedicineApp.Data;
 
@@ -44,10 +46,22 @@ public class AccountController : ApiControllerBase
     [HttpPost("register-patient")]
     public async Task<IActionResult> RegisterPatient([FromBody] RegisterPatientDTO registerPatientDTO)
     {
+        // Validate ModelState (Ensures all required fields and custom validations are checked)
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         // Validate passwords match
         if (registerPatientDTO.Password != registerPatientDTO.ConfirmPassword)
         {
             return BadRequest("Passwords do not match.");
+        }
+
+        // Validate Password Format (custom validation logic)
+        if (!IsValidPassword(registerPatientDTO.Password))
+        {
+            return BadRequest("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character (@$!%*?&), and must be at least 8 characters long.");
         }
 
         // Check if email exists
@@ -55,6 +69,18 @@ public class AccountController : ApiControllerBase
         if (existingUser != null)
         {
             return BadRequest("Email is already in use.");
+        }
+
+        // Validate Date of Birth (Check if the patient is at least 18 years old)
+        if (registerPatientDTO.DateOfBirth > DateTime.UtcNow.AddYears(-18))
+        {
+            return BadRequest("Patient must be at least 18 years old.");
+        }
+
+        // Check if ProfileImage is valid (Optional based on your use case)
+        if (!Uri.IsWellFormedUriString(registerPatientDTO.ProfileImage, UriKind.Absolute))
+        {
+            return BadRequest("Profile image URL is not valid.");
         }
 
         // Create User in AspNetUsers
@@ -98,6 +124,15 @@ public class AccountController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         return Ok("Patient registered successfully.");
+    }
+
+    // Helper function for password validation
+    private bool IsValidPassword(string password)
+    {
+        // The password must contain at least one uppercase letter, one lowercase letter,
+        // one digit, one special character (@$!%*?&) and be at least 8 characters long.
+        var pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$";
+        return Regex.IsMatch(password, pattern);
     }
     // Get all patients with pagination, filtering, and sorting
     [HttpGet("GetAllPatients")]
@@ -169,25 +204,37 @@ public class AccountController : ApiControllerBase
             }
         }
 
-        // Update patient details
         [HttpPut("UpdatePatient/{patientId}")]
         public async Task<IActionResult> UpdatePatient(int patientId, [FromBody] PatientUpdateViewModel model)
         {
             try
             {
-                var isUpdated = await _patientManager.UpdatePatient(model, patientId);
-                if (!isUpdated)
+                var patient = await _patientManager.GetPatientById(patientId);
+
+                if (patient == null)
                 {
-                    return BadRequest(new { message = "Error updating patient details" });
+                    return BadRequest(new
+                    {
+                        message = "Error updating patient details",
+                        details = "Patient with the given ID does not exist."
+                    });
                 }
-                return Ok(new { message = "Patient details updated successfully" });
+
+                var isUpdated = await _patientManager.UpdatePatientDetails(model, patientId);
+
+                if (isUpdated)
+                {
+                    return Ok(new { message = "Doctor updated successfully." });
+                }
+
+                return StatusCode(500,
+                    new { message = "Update executed, but no rows were modified. This could be because the" });
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = "Error updating patient details", details = ex.Message });
             }
         }
-
         // Get a patient's appointments
         [HttpGet("GetPatientAppointments/{patientId}")]
         public async Task<IActionResult> GetPatientAppointments(int patientId, int offset, int limit)

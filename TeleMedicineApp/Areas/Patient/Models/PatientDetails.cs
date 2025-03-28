@@ -39,7 +39,7 @@ namespace TeleMedicineApp.Areas.Patient.Models
         public string EmergencyContactNumber { get; set; }
 
         [StringLength(255)]
-        public string HealthInsuranceProvider { get; set; }
+        public string? HealthInsuranceProvider { get; set; }
 
         public string MedicalHistory { get; set; }
 
