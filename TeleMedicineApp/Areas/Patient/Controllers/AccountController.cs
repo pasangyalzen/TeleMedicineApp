@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TeleMedicineApp.Areas.Admin.Provider;
 using TeleMedicineApp.Areas.Doctor.Models;
 using TeleMedicineApp.Areas.Doctor.ViewModels;
@@ -15,7 +16,7 @@ using TeleMedicineApp.Data;
 namespace TeleMedicineApp.Areas.Patients.Controllers;
 
 [Authorize(Roles = "SuperAdmin")] // Default authorization for all actions
-[Area("Doctor")]
+[Area("Patient")]
 [Route("api/[area]/[action]")]
 [ApiController]
 
@@ -43,7 +44,7 @@ public class AccountController : ApiControllerBase
         _patientManager = patientManager;
 
     }
-    [HttpPost("register-patient")]
+    [HttpPost]
     public async Task<IActionResult> RegisterPatient([FromBody] RegisterPatientDTO registerPatientDTO)
     {
         // Validate ModelState (Ensures all required fields and custom validations are checked)
@@ -95,6 +96,11 @@ public class AccountController : ApiControllerBase
         {
             return BadRequest("User registration failed.");
         }
+        var roleResult = await _userManager.AddToRoleAsync(user, "Patient");
+        if (!roleResult.Succeeded)
+        {
+            return BadRequest("Failed to assign role.");
+        }
 
         // Add User to PatientDetails table
         var patientDetails = new PatientDetails
@@ -135,7 +141,7 @@ public class AccountController : ApiControllerBase
         return Regex.IsMatch(password, pattern);
     }
     // Get all patients with pagination, filtering, and sorting
-    [HttpGet("GetAllPatients")]
+    [HttpGet]
     public async Task<IActionResult> GetAllPatients(string search = "", string sortColumn = "CreatedAt", string sortOrder = "ASC", int page = 1, int pageSize = 5)
     {
         try
@@ -163,26 +169,45 @@ public class AccountController : ApiControllerBase
         }
     }
         // Get a specific patient by ID
-        [HttpGet("GetPatientById/{patientId}")]
-        public async Task<IActionResult> GetPatientById(int patientId)
+        [HttpGet("{patientId}")]
+        public async Task<PatientUpdateViewModel> GetPatientById(int patientId)
         {
-            try
-            {
-                var result = await _patientManager.GetPatientById(patientId);
-                if (result == null)
-                {
-                    return NotFound(new { message = "Patient not found" });
-                }
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = "Error retrieving patient details", details = ex.Message });
-            }
-        }
+            // Assuming you're using Entity Framework to fetch data
+            var patient = await _context.PatientDetails
+                .Where(p => p.PatientId == patientId)
+                .Include(p => p.User)  // Joining AspNetUsers (User table)
+                .FirstOrDefaultAsync();
 
+            if (patient == null)
+            {
+                return null;
+            }
+
+            // Mapping to ViewModel
+            return new PatientUpdateViewModel
+            {
+                PatientId = patient.PatientId,
+                FullName = patient.FullName,
+                PhoneNumber = patient.PhoneNumber,
+                Email = patient.User.Email,  // Mapping email from AspNetUsers
+                Gender = patient.Gender,
+                DateOfBirth = patient.DateOfBirth,
+                BloodGroup = patient.BloodGroup,
+                Address = patient.Address,
+                EmergencyContactName = patient.EmergencyContactName,
+                EmergencyContactNumber = patient.EmergencyContactNumber,
+                HealthInsuranceProvider = patient.HealthInsuranceProvider,
+                MedicalHistory = patient.MedicalHistory,
+                ProfileImage = patient.ProfileImage,
+                MaritalStatus = patient.MaritalStatus,
+                Allergies = patient.Allergies,
+                ChronicDiseases = patient.ChronicDiseases,
+                Medications = patient.Medications,
+                Status = patient.Status
+            };
+        }
         // Delete a patient by userId
-        [HttpDelete("DeletePatient/{userId}")]
+        [HttpDelete("{userId}")]
         public async Task<IActionResult> DeletePatient(string userId)
         {
             try
@@ -204,7 +229,7 @@ public class AccountController : ApiControllerBase
             }
         }
 
-        [HttpPut("UpdatePatient/{patientId}")]
+        [HttpPut("{patientId}")]
         public async Task<IActionResult> UpdatePatient(int patientId, [FromBody] PatientUpdateViewModel model)
         {
             try
@@ -236,7 +261,7 @@ public class AccountController : ApiControllerBase
             }
         }
         // Get a patient's appointments
-        [HttpGet("GetPatientAppointments/{patientId}")]
+        [HttpGet("{patientId}")]
         public async Task<IActionResult> GetPatientAppointments(int patientId, int offset, int limit)
         {
             try
@@ -251,7 +276,7 @@ public class AccountController : ApiControllerBase
         }
 
         // Get userId by patientId
-        [HttpGet("GetUserIdByPatientId/{patientId}")]
+        [HttpGet("{patientId}")]
         public async Task<IActionResult> GetUserIdByPatientId(int patientId)
         {
             try

@@ -5,6 +5,8 @@ namespace TeleMedicineApp.Areas.Patient.ViewModels
 {
     public class PatientUpdateViewModel
     {
+        public int PatientId { get; set; }
+        public string Email { get; set; }
         [StringLength(255)]
         public string FullName { get; set; }
 

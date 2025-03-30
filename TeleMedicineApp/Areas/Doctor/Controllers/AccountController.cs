@@ -66,6 +66,11 @@ public class AccountController : ApiControllerBase
         {
             return BadRequest("User registration failed.");
         }
+        var roleResult = await _userManager.AddToRoleAsync(user, "Doctor");
+        if (!roleResult.Succeeded)
+        {
+            return BadRequest("Failed to assign role.");
+        }
 
         // Add User to DoctorDetails table
         var doctorDetails = new DoctorDetails

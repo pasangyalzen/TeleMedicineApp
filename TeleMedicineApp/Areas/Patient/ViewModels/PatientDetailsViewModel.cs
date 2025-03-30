@@ -8,6 +8,7 @@ namespace TeleMedicineApp.Areas.Patient.Models
     {
         [Key]
         public int PatientId { get; set; }
+        public string Email { get; set; }
 
         [Required]
         public string UserId { get; set; }

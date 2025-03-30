@@ -60,7 +60,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
         }
 
         // Get a specific patient by ID
-        public async Task<PatientDetailsViewModel> GetPatientById(int patientId)
+        public async Task<PatientUpdateViewModel> GetPatientById(int patientId)
         {
             SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
             IList<KeyValue> param = new List<KeyValue>
@@ -68,7 +68,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
                 new KeyValue("@PatientId", patientId)
             };
 
-            var result = await sqlHelper.ExecuteAsListAsync<PatientDetailsViewModel>("[dbo].[usp_GetPatientById]", param);
+            var result = await sqlHelper.ExecuteAsListAsync<PatientUpdateViewModel>("[dbo].[usp_GetPatientById]", param);
             return result.FirstOrDefault(); // Return the first item or null if no patient found
         }
 
