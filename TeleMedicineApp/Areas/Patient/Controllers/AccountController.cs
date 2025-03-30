@@ -20,7 +20,7 @@ namespace TeleMedicineApp.Areas.Patients.Controllers;
 [Route("api/[area]/[action]")]
 [ApiController]
 
-public class AccountController : ApiControllerBase
+public class PatientController : ApiControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
@@ -29,7 +29,7 @@ public class AccountController : ApiControllerBase
     private readonly PatientManager _patientManager;
 
 
-    public AccountController(
+    public PatientController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
@@ -40,7 +40,7 @@ public class AccountController : ApiControllerBase
         _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
-        _logger = loggerFactory.CreateLogger<AccountController>();
+        _logger = loggerFactory.CreateLogger<PatientController>();
         _patientManager = patientManager;
 
     }

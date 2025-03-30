@@ -1,19 +1,13 @@
 using System.ComponentModel.DataAnnotations;
-using TeleMedicineApp.Data;
 
-namespace TeleMedicineApp.Areas.Pharmacist.Models
+namespace TeleMedicineApp.Areas.Pharmacist.ViewModels
 {
-    public class PharmacistDetails
+    public class PharmacistUpdateViewModel
     {
-        [Key]
         public int PharmacistId { get; set; }
-
-        [Required(ErrorMessage = "User ID is required.")]
-        public string UserId { get; set; }
 
         [Required(ErrorMessage = "Full Name is required.")]
         [StringLength(100, ErrorMessage = "Full Name cannot be longer than 100 characters.")]
-        public ApplicationUser User { get; set; }
         public string FullName { get; set; }
 
         [Phone(ErrorMessage = "Invalid phone number.")]
@@ -45,9 +39,6 @@ namespace TeleMedicineApp.Areas.Pharmacist.Models
         public string ServicesOffered { get; set; }
 
         public string ProfileImage { get; set; }
-
-        [Required(ErrorMessage = "Creation date is required.")]
-        public DateTime CreatedAt { get; set; }
 
         [Required(ErrorMessage = "Updated date is required.")]
         public DateTime UpdatedAt { get; set; }

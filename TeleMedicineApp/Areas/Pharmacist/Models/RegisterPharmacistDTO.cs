@@ -1,19 +1,25 @@
 using System.ComponentModel.DataAnnotations;
-using TeleMedicineApp.Data;
 
-namespace TeleMedicineApp.Areas.Pharmacist.Models
+namespace TeleMedicineApp.Areas.Admin.Models
 {
-    public class PharmacistDetails
+    public class RegisterPharmacistDTO
     {
-        [Key]
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email format.")]
+        public string Email { get; set; }
+
+        [Required, MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
+        public string Password { get; set; }
+
+        [Required, Compare("Password", ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; }
         public int PharmacistId { get; set; }
 
-        [Required(ErrorMessage = "User ID is required.")]
-        public string UserId { get; set; }
+        // [Required(ErrorMessage = "User ID is required.")]
+        // public string UserId { get; set; }
 
         [Required(ErrorMessage = "Full Name is required.")]
         [StringLength(100, ErrorMessage = "Full Name cannot be longer than 100 characters.")]
-        public ApplicationUser User { get; set; }
         public string FullName { get; set; }
 
         [Phone(ErrorMessage = "Invalid phone number.")]
@@ -44,19 +50,19 @@ namespace TeleMedicineApp.Areas.Pharmacist.Models
         [StringLength(500, ErrorMessage = "Services Offered cannot be longer than 500 characters.")]
         public string ServicesOffered { get; set; }
 
-        public string ProfileImage { get; set; }
+        // public string ProfileImage { get; set; }
 
-        [Required(ErrorMessage = "Creation date is required.")]
-        public DateTime CreatedAt { get; set; }
+        // [Required(ErrorMessage = "Creation date is required.")]
+        // public DateTime CreatedAt { get; set; }
+        //
+        // [Required(ErrorMessage = "Updated date is required.")]
+        // public DateTime UpdatedAt { get; set; }
 
-        [Required(ErrorMessage = "Updated date is required.")]
-        public DateTime UpdatedAt { get; set; }
+        // [Required(ErrorMessage = "Email is required.")]
+        // [EmailAddress(ErrorMessage = "Invalid email format.")]
+        // public string Email { get; set; }
 
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Invalid email format.")]
-        public string Email { get; set; }
-
-        public int? DoctorId { get; set; }  // Optional: Based on your table
-        public int? PatientId { get; set; }  // Optional: Based on your table
+        // public int? DoctorId { get; set; }  // Optional: Based on your table
+        // public int? PatientId { get; set; }  // Optional: Based on your table
     }
 }

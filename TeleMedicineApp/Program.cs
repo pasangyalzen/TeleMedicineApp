@@ -94,8 +94,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 var jwtConfig = builder.Configuration.GetSection("JWT").Get<JwtConfig>();
 builder.Services.AddSingleton(jwtConfig);
 builder.Services.AddScoped<DoctorManager>();
-    builder.Services.AddScoped<AppointmentManager>();  // Add this line
-    builder.Services.AddScoped<PatientManager>();
+builder.Services.AddScoped<AppointmentManager>();  // Add this line
+builder.Services.AddScoped<PatientManager>();
+builder.Services.AddScoped<PharmacistManager>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 //builder.Services.AddScoped<AppointmentManager>();
 
