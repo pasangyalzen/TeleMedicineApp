@@ -11,8 +11,7 @@ namespace TeleMedicineApp.Areas.Pharmacist.Models
         [Required(ErrorMessage = "User ID is required.")]
         public string UserId { get; set; }
 
-        [Required(ErrorMessage = "Full Name is required.")]
-        [StringLength(100, ErrorMessage = "Full Name cannot be longer than 100 characters.")]
+        [StringLength(255, ErrorMessage = "Full Name cannot be longer than 255 characters.")]
         public ApplicationUser User { get; set; }
         public string FullName { get; set; }
 
@@ -27,21 +26,21 @@ namespace TeleMedicineApp.Areas.Pharmacist.Models
         public DateTime DateOfBirth { get; set; }
 
         [Required(ErrorMessage = "Pharmacy Name is required.")]
-        [StringLength(150, ErrorMessage = "Pharmacy Name cannot be longer than 150 characters.")]
+        [StringLength(255, ErrorMessage = "Pharmacy Name cannot be longer than 255 characters.")]
         public string PharmacyName { get; set; }
 
         [Required(ErrorMessage = "License Number is required.")]
-        [StringLength(50, ErrorMessage = "License Number cannot be longer than 50 characters.")]
+        [StringLength(100, ErrorMessage = "License Number cannot be longer than 100 characters.")]
         public string LicenseNumber { get; set; }
 
         [Required(ErrorMessage = "Pharmacy Address is required.")]
-        [StringLength(250, ErrorMessage = "Pharmacy Address cannot be longer than 250 characters.")]
+        [StringLength(500, ErrorMessage = "Pharmacy Address cannot be longer than 500 characters.")]
         public string PharmacyAddress { get; set; }
 
-        [StringLength(100, ErrorMessage = "Working Hours cannot be longer than 100 characters.")]
+        [StringLength(50, ErrorMessage = "Working Hours cannot be longer than 50 characters.")]
         public string WorkingHours { get; set; }
 
-        [StringLength(500, ErrorMessage = "Services Offered cannot be longer than 500 characters.")]
+        [StringLength(1000, ErrorMessage = "Services Offered cannot be longer than 1000 characters.")]
         public string ServicesOffered { get; set; }
 
         public string ProfileImage { get; set; }
@@ -52,11 +51,10 @@ namespace TeleMedicineApp.Areas.Pharmacist.Models
         [Required(ErrorMessage = "Updated date is required.")]
         public DateTime UpdatedAt { get; set; }
 
-        [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         public string Email { get; set; }
 
-        public int? DoctorId { get; set; }  // Optional: Based on your table
-        public int? PatientId { get; set; }  // Optional: Based on your table
+        public int? DoctorId { get; set; }  // Foreign key to DoctorDetails
+        public int? PatientId { get; set; }  // Foreign key to PatientDetails
     }
 }

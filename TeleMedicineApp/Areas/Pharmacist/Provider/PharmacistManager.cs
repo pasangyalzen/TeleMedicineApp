@@ -97,7 +97,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
                 }
                 else if (status == 3)
                 {
-                    response.Result = "Error during pharmacist deletion.";
+                    response.Result = "There was an error deleting the pharmacist.";
                 }
             }
             catch (Exception ex)
@@ -107,6 +107,8 @@ namespace TeleMedicineApp.Areas.Admin.Provider
 
             return response;
         }
+        
+        
 
         // Update pharmacist details
         public async Task<bool> UpdatePharmacistDetails(PharmacistUpdateViewModel model, int pharmacistId)

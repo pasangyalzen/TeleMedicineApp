@@ -27,8 +27,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<DoctorDetails>().ToTable("DoctorDetails"); 
-        
+        modelBuilder.Entity<DoctorDetails>().ToTable("DoctorDetails"); // Already created in DB
     }
     
 }

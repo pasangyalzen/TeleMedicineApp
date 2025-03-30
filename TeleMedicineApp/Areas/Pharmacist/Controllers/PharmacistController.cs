@@ -142,52 +142,39 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
             }
         }
 
-        [HttpGet("{pharmacistId}")]
-        public async Task<PharmacistUpdateViewModel> GetPharmacistById(int pharmacistId)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<PharmacistUpdateViewModel>> GetPharmacistById(int id)
         {
-            var pharmacist = await _context.PharmacistDetails
-                .Where(p => p.PharmacistId == pharmacistId)
-                .Include(p => p.User)
-                .FirstOrDefaultAsync();
-
+            var pharmacist = await _pharmacistManager.GetPharmacistById(id);
             if (pharmacist == null)
             {
-                return null;
+                return NotFound(new { Message = "Pharmacist not found" });
             }
-
-            return new PharmacistUpdateViewModel
-            {
-                PharmacistId = pharmacist.PharmacistId,
-                FullName = pharmacist.FullName,
-                PhoneNumber = pharmacist.PhoneNumber,
-                Email = pharmacist.User.Email,
-                Gender = pharmacist.Gender,
-                DateOfBirth = pharmacist.DateOfBirth,
-                LicenseNumber = pharmacist.LicenseNumber,
-                PharmacyName = pharmacist.PharmacyName,
-                ProfileImage = pharmacist.ProfileImage,
-               //Status = pharmacist.Status
-            };
+            return Ok(pharmacist);
         }
-
         [HttpDelete("{userId}")]
         public async Task<IActionResult> DeletePharmacist(string userId)
         {
             try
             {
+                // Call the manager to handle deletion logic
                 var response = await _pharmacistManager.DeletePharmacistByUserId(userId);
 
+                // Check if the deletion was successful
                 if (response.IsSuccess)
                 {
+                    // Return success response with the result message
                     return Ok(new { message = response.Result });
                 }
                 else
                 {
+                    // Return error message if deletion was not successful
                     return BadRequest(new { message = response.Result, error = response.ErrorMessage });
                 }
             }
             catch (Exception ex)
             {
+                // Catch any unexpected errors and return a general error message
                 return BadRequest(new { message = "Error deleting pharmacist", details = ex.Message });
             }
         }
@@ -224,19 +211,19 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
             }
         }
 
-        [HttpGet("{pharmacistId}")]
-        public async Task<IActionResult> GetPharmacistAppointments(int pharmacistId, int offset, int limit)
-        {
-            try
-            {
-                var result = await _pharmacistManager.GetPharmacistAppointments(pharmacistId, offset, limit);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = "Error retrieving pharmacist appointments", details = ex.Message });
-            }
-        }
+        // [HttpGet("{pharmacistId}")]
+        // public async Task<IActionResult> GetPharmacistAppointments(int pharmacistId, int offset, int limit)
+        // {
+        //     try
+        //     {
+        //         var result = await _pharmacistManager.GetPharmacistAppointments(pharmacistId, offset, limit);
+        //         return Ok(result);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return BadRequest(new { message = "Error retrieving pharmacist appointments", details = ex.Message });
+        //     }
+        // }
 
         [HttpGet("{pharmacistId}")]
         public async Task<IActionResult> GetUserIdByPharmacistId(int pharmacistId)

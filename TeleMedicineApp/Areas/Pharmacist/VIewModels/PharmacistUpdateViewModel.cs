@@ -1,13 +1,16 @@
 using System.ComponentModel.DataAnnotations;
+using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Pharmacist.ViewModels
 {
     public class PharmacistUpdateViewModel
     {
+        public string UserId { get; set; }
         public int PharmacistId { get; set; }
 
         [Required(ErrorMessage = "Full Name is required.")]
         [StringLength(100, ErrorMessage = "Full Name cannot be longer than 100 characters.")]
+        public ApplicationUser User { get; set; }
         public string FullName { get; set; }
 
         [Phone(ErrorMessage = "Invalid phone number.")]
