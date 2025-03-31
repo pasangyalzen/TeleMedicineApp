@@ -102,7 +102,7 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
                 DateOfBirth = registerPharmacistDTO.DateOfBirth,
                 LicenseNumber = registerPharmacistDTO.LicenseNumber,
                 PharmacyName = registerPharmacistDTO.PharmacyName,
-                // ProfileImage = registerPharmacistDTO.ProfileImage,
+                //ProfileImage = registerPharmacistDTO.ProfileImage,
                 // Status = true, // Active by default
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
