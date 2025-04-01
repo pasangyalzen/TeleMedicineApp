@@ -55,7 +55,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
         }
 
         // Get a specific pharmacist by ID
-        public async Task<PharmacistUpdateViewModel> GetPharmacistById(int pharmacistId)
+        public async Task<PharmacistDetailsViewModel> GetPharmacistById(int pharmacistId)
         {
             SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
             IList<KeyValue> param = new List<KeyValue>
@@ -63,7 +63,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
                 new KeyValue("@PharmacistId", pharmacistId)
             };
 
-            var result = await sqlHelper.ExecuteAsListAsync<PharmacistUpdateViewModel>("[dbo].[usp_GetPharmacistById]", param);
+            var result = await sqlHelper.ExecuteAsListAsync<PharmacistDetailsViewModel>("[dbo].[usp_GetPharmacistById]", param);
             return result.FirstOrDefault(); // Return the first item or null if no pharmacist found
         }
 
@@ -119,6 +119,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
             {
                 new KeyValue("@PharmacistId", pharmacistId),
                 new KeyValue("@FullName", model.FullName ?? (object)DBNull.Value),
+                new KeyValue("Email", model.Email ?? (object)DBNull.Value),
                 new KeyValue("@PhoneNumber", model.PhoneNumber ?? (object)DBNull.Value),
                 new KeyValue("@Gender", model.Gender ?? (object)DBNull.Value),
                 new KeyValue("@DateOfBirth", model.DateOfBirth),
@@ -128,7 +129,6 @@ namespace TeleMedicineApp.Areas.Admin.Provider
                 new KeyValue("@WorkingHours", model.WorkingHours ?? (object)DBNull.Value),
                 new KeyValue("@ServicesOffered", model.ServicesOffered ?? (object)DBNull.Value),
                 new KeyValue("@ProfileImage", model.ProfileImage ?? (object)DBNull.Value),
-                new KeyValue("@UpdatedAt", model.UpdatedAt)
             };
 
             var result = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_UpdatePharmacistDetails]", param);

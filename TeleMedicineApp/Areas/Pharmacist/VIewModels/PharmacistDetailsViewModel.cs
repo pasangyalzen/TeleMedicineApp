@@ -6,8 +6,8 @@ namespace TeleMedicineApp.Areas.Pharmacist.ViewModels
     {
         public int PharmacistId { get; set; }
 
-        [Required(ErrorMessage = "User ID is required.")]
-        public string UserId { get; set; }
+        // [Required(ErrorMessage = "User ID is required.")]
+        // public string UserId { get; set; }
 
         [Required(ErrorMessage = "Full Name is required.")]
         [StringLength(100, ErrorMessage = "Full Name cannot be longer than 100 characters.")]

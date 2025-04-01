@@ -13,7 +13,7 @@ namespace TeleMedicineApp.Areas.Admin.Models
 
         [Required, Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; }
-        public int PharmacistId { get; set; }
+        // public int PharmacistId { get; set; }
 
         // [Required(ErrorMessage = "User ID is required.")]
         // public string UserId { get; set; }
@@ -50,7 +50,7 @@ namespace TeleMedicineApp.Areas.Admin.Models
         [StringLength(500, ErrorMessage = "Services Offered cannot be longer than 500 characters.")]
         public string ServicesOffered { get; set; }
 
-        // public string ProfileImage { get; set; }
+        public string ProfileImage { get; set; }
 
         // [Required(ErrorMessage = "Creation date is required.")]
         // public DateTime CreatedAt { get; set; }

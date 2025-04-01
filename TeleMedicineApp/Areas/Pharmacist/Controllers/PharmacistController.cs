@@ -102,7 +102,7 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
                 DateOfBirth = registerPharmacistDTO.DateOfBirth,
                 LicenseNumber = registerPharmacistDTO.LicenseNumber,
                 PharmacyName = registerPharmacistDTO.PharmacyName,
-                //ProfileImage = registerPharmacistDTO.ProfileImage,
+                ProfileImage = registerPharmacistDTO.ProfileImage,
                 // Status = true, // Active by default
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -143,7 +143,7 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<PharmacistUpdateViewModel>> GetPharmacistById(int id)
+        public async Task<ActionResult<PharmacistDetailsViewModel>> GetPharmacistById(int id)
         {
             var pharmacist = await _pharmacistManager.GetPharmacistById(id);
             if (pharmacist == null)
