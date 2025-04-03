@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using TeleChaukiDB.Models;
 //using TeleMedicineApp.Areas.Appointments.Models;
 using TeleMedicineApp.Areas.Doctor.Models;
 using TeleMedicineApp.Areas.Patient.Models;
@@ -19,7 +20,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<DoctorDetails> DoctorDetails { get; set; }
     public DbSet<PatientDetails> PatientDetails { get; set; }
-    //public DbSet<Appointment> Appointments { get; set; }
+    public DbSet<Appointment> Appointments { get; set; }
 
     //public DbSet<PatientDetails> PatientDetails { get; set; }
     public DbSet<PharmacistDetails> PharmacistDetails { get; set; }

@@ -1,12 +1,20 @@
 {
   "Version": 1,
-  "Hash": "ZHViel4CRmCWKGa81PoqDsG8sZZ162HRl17ILj7pMzY=",
+  "Hash": "Ohxki1KvN/hUkp9jHbUiEVGMtARn3PAc1W7X/gDmc+o=",
   "Source": "TeleMedicineApp",
   "BasePath": "_content/TeleMedicineApp",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "TeleMedicineApp/wwwroot",
+      "Source": "TeleMedicineApp",
+      "ContentRoot": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/",
+      "BasePath": "_content/TeleMedicineApp",
+      "Pattern": "**"
+    }
+  ],
   "Assets": [
     {
       "Identity": "/Users/pasanggelzeen/.nuget/packages/microsoft.aspnetcore.identity.ui/8.0.4/staticwebassets/V5/css/site.css",
@@ -1147,6 +1155,44 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "/Users/pasanggelzeen/.nuget/packages/microsoft.aspnetcore.identity.ui/8.0.4/staticwebassets/V5/lib/jquery/LICENSE.txt"
+    },
+    {
+      "Identity": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/4b9e71be-28ca-433c-ba5a-0fe9212e97b2_1000015724.jpg",
+      "SourceId": "TeleMedicineApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/",
+      "BasePath": "_content/TeleMedicineApp",
+      "RelativePath": "uploads/4b9e71be-28ca-433c-ba5a-0fe9212e97b2_1000015724.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/uploads/4b9e71be-28ca-433c-ba5a-0fe9212e97b2_1000015724.jpg"
+    },
+    {
+      "Identity": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/6f34bf68-7b62-4f8e-9f76-4f79d4093f36_1000015724.jpg",
+      "SourceId": "TeleMedicineApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/",
+      "BasePath": "_content/TeleMedicineApp",
+      "RelativePath": "uploads/6f34bf68-7b62-4f8e-9f76-4f79d4093f36_1000015724.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/uploads/6f34bf68-7b62-4f8e-9f76-4f79d4093f36_1000015724.jpg"
     }
   ]
 }

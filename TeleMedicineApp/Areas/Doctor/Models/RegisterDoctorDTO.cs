@@ -13,5 +13,7 @@ public class RegisterDoctorDTO
     public int YearsOfExperience { get; set; }
     public string ClinicName { get; set; }
     public string ClinicAddress { get; set; }
+
     public decimal ConsultationFee { get; set; }
+//     
 }
