@@ -127,4 +127,96 @@ public class DoctorAppointmentController : ApiControllerBase
 
         return Ok("Appointment cancelled successfully.");
     }
+    
+    [HttpGet("{doctorId}")]
+    public async Task<IActionResult> GetUpcomingAppointments(int doctorId)
+    {
+        var upcomingAppointments = await _context.Appointments
+            .Where(a => a.DoctorId == doctorId && a.ScheduledTime > DateTime.UtcNow && a.Status != "Cancelled" && a.Status != "Completed")
+            .OrderBy(a => a.ScheduledTime)
+            .Select(a => new
+            {
+                a.AppointmentId,
+                a.DoctorId,
+                a.PatientId,
+                a.ScheduledTime,
+                a.Status,
+                a.VideoCallLink,
+                a.CreatedAt,
+                a.UpdatedAt,
+                a.AddedBy
+            })
+            .ToListAsync();
+
+        if (!upcomingAppointments.Any())
+            return NotFound("No upcoming appointments.");
+
+        return Ok(upcomingAppointments);
+    }
+    
+    [HttpGet("{doctorId}")]
+    public async Task<IActionResult> GetPastAppointments(int doctorId)
+    {
+        var pastAppointments = await _context.Appointments
+            .Where(a => a.DoctorId == doctorId && a.ScheduledTime < DateTime.UtcNow && a.Status != "Cancelled" && a.Status != "Completed")
+            .OrderBy(a => a.ScheduledTime)
+            .Select(a => new
+            {
+                a.AppointmentId,
+                a.DoctorId,
+                a.PatientId,
+                a.ScheduledTime,
+                a.Status,
+                a.VideoCallLink,
+                a.CreatedAt,
+                a.UpdatedAt,
+                a.AddedBy
+            })
+            .ToListAsync();
+
+        if (!pastAppointments.Any())
+            return NotFound("No past appointments.");
+
+        return Ok(pastAppointments);
+    }
+    
+    [HttpPut("{appointmentId}")]
+    public async Task<IActionResult> UpdateAppointmentStatus(int appointmentId, [FromBody] string newStatus)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        if (appointment == null)
+            return NotFound("Appointment not found.");
+
+        appointment.Status = newStatus;
+        _context.Appointments.Update(appointment);
+        await _context.SaveChangesAsync();
+
+        return Ok("Appointment status updated.");
+    }
+    
+    [HttpGet("{doctorId}")]
+    public async Task<IActionResult> GetCancelledAppointments(int doctorId)
+    {
+        var cancelledAppointments = await _context.Appointments
+            .Where(a => a.DoctorId == doctorId && a.Status == "Cancelled")
+            .OrderBy(a => a.ScheduledTime)
+            .Select(a => new
+            {
+                a.AppointmentId,
+                a.DoctorId,
+                a.PatientId,
+                a.ScheduledTime,
+                a.Status,
+                a.VideoCallLink,
+                a.CreatedAt,
+                a.UpdatedAt,
+                a.AddedBy
+            })
+            .ToListAsync();
+
+        if (!cancelledAppointments.Any())
+            return NotFound("No cancelled appointments.");
+
+        return Ok(cancelledAppointments);
+    }
 }
