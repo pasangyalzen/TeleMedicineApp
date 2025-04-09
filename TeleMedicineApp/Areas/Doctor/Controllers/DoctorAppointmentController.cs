@@ -11,7 +11,7 @@ using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Doctor.Controllers;
 
-[Authorize(Roles = "SuperAdmin,Doctor")] // Default authorization for all actions
+[Authorize(Roles = "Doctor")] // Default authorization for all actions
 [Area("Doctor")]
 [Route("api/[area]/[action]")]
 [ApiController]
@@ -37,22 +37,23 @@ public class DoctorAppointmentController : ApiControllerBase
         _logger = loggerFactory.CreateLogger<DoctorAppointmentController>();
 
     }
+
     [HttpGet("{doctorId}")]
     public async Task<IActionResult> GetTodaysAppointments(int doctorId)
     {
         var today = DateTime.UtcNow.Date; // Get today's date (UTC)
 
         var appointments = await _context.Appointments
-            .Where(a => a.DoctorId == doctorId && a.ScheduledTime.Date == today) // Use ScheduledTime
+            .Where(a => a.DoctorId == doctorId && a.ScheduledTime.Date == today && a.Status != "Cancelled") // Use ScheduledTime
             .OrderBy(a => a.ScheduledTime) // Sort by ScheduledTime
-            .Join(_context.PatientDetails, 
-                appointment => appointment.PatientId, 
-                patient => patient.PatientId, 
+            .Join(_context.PatientDetails,
+                appointment => appointment.PatientId,
+                patient => patient.PatientId,
                 (appointment, patient) => new { appointment, patient }) // Join with PatientDetails
-            .Join(_context.DoctorDetails, 
-                appointment => appointment.appointment.DoctorId, 
-                doctor => doctor.DoctorId, 
-                (appointment, doctor) => new 
+            .Join(_context.DoctorDetails,
+                appointment => appointment.appointment.DoctorId,
+                doctor => doctor.DoctorId,
+                (appointment, doctor) => new
                 {
                     appointment.appointment.AppointmentId,
                     appointment.appointment.ScheduledTime,
@@ -67,6 +68,7 @@ public class DoctorAppointmentController : ApiControllerBase
 
         return Ok(appointments);
     }
+
     [HttpGet("{userId}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetDoctorIdByUserId(string userId)
@@ -86,14 +88,18 @@ public class DoctorAppointmentController : ApiControllerBase
         // Return the DoctorId
         return Ok(doctorId);
     }
-    [HttpPut("RescheduleAppointment/{appointmentId}")]
+
+
+    [HttpPut("{appointmentId}")]
     public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromBody] DateTime newDateTime)
     {
         var appointment = await _context.Appointments.FindAsync(appointmentId);
         if (appointment == null)
             return NotFound("Appointment not found.");
 
-        appointment.ScheduledTime = newDateTime;
+        // Store the local time directly as UTC in the database
+        appointment.ScheduledTime = newDateTime;  // This stores the received time as UTC
+
         appointment.Status = "Rescheduled"; // Update status if needed
 
         _context.Appointments.Update(appointment);
@@ -101,5 +107,24 @@ public class DoctorAppointmentController : ApiControllerBase
 
         return Ok("Appointment rescheduled successfully.");
     }
+    [HttpPut("{appointmentId}")]
+    public async Task<IActionResult> CancelAppointment(int appointmentId)
+    {
+        // Find the appointment using the appointmentId
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
     
+        if (appointment == null)
+        {
+            return NotFound("Appointment not found.");
+        }
+
+        // Update the status to 'Cancelled'
+        appointment.Status = "Cancelled";
+
+        // Save the changes to the database
+        _context.Appointments.Update(appointment);
+        await _context.SaveChangesAsync();
+
+        return Ok("Appointment cancelled successfully.");
+    }
 }
