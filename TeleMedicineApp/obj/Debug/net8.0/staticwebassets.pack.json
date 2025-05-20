@@ -9,6 +9,10 @@
       "PackagePath": "staticwebassets/uploads/6f34bf68-7b62-4f8e-9f76-4f79d4093f36_1000015724.jpg"
     },
     {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/0b4f73fb-7b3e-45d2-92fe-a5d2e3e9495a.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/0b4f73fb-7b3e-45d2-92fe-a5d2e3e9495a.jpg"
+    },
+    {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/2d484e04-cdd4-41db-9a67-7313dc0cfd0b.jpg",
       "PackagePath": "staticwebassets/uploads/doctors/2d484e04-cdd4-41db-9a67-7313dc0cfd0b.jpg"
     },
@@ -23,6 +27,14 @@
     {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/532ee82a-9f70-4305-ab48-933193e3e656.jpg",
       "PackagePath": "staticwebassets/uploads/doctors/532ee82a-9f70-4305-ab48-933193e3e656.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/6f35104f-006e-46fb-ba6a-21d361afe7be.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/6f35104f-006e-46fb-ba6a-21d361afe7be.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/70b9328c-f464-49d1-87c8-1f222d4122c3.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/70b9328c-f464-49d1-87c8-1f222d4122c3.jpg"
     },
     {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/beb19f1f-90c5-4e49-a843-717ff0aad7e5.jpg",
@@ -43,6 +55,34 @@
     {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/e55bacf3-93d4-42eb-9abc-d2105ca753ff.png",
       "PackagePath": "staticwebassets/uploads/doctors/e55bacf3-93d4-42eb-9abc-d2105ca753ff.png"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/patients/68d60425-95f3-40f0-9326-bfbc83aa8882.jpg",
+      "PackagePath": "staticwebassets/uploads/patients/68d60425-95f3-40f0-9326-bfbc83aa8882.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/2036af94-1ca0-4fd1-bf36-dec5eabd9e85.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/2036af94-1ca0-4fd1-bf36-dec5eabd9e85.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/89de3967-bca7-47e5-9cae-a80e3c67e542.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/89de3967-bca7-47e5-9cae-a80e3c67e542.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/8f79795e-dcf7-455e-9df0-d5d7842af43a.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/8f79795e-dcf7-455e-9df0-d5d7842af43a.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/90e07158-1974-409a-a1ec-864c5e687de7.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/90e07158-1974-409a-a1ec-864c5e687de7.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/a35ef01b-2e49-4ee7-a3e4-311a5d7eb563.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/a35ef01b-2e49-4ee7-a3e4-311a5d7eb563.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/f45fe768-d653-44ca-b6f5-59cc1afa0607.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/f45fe768-d653-44ca-b6f5-59cc1afa0607.jpg"
     },
     {
       "Id": "obj/Debug/net8.0/staticwebassets/msbuild.TeleMedicineApp.Microsoft.AspNetCore.StaticWebAssets.props",

@@ -44,19 +44,19 @@ public class PatientAppointmentController : ApiControllerBase
         try
         {
             var upcomingAppointments = await _context.Appointments
-                .Where(a => a.PatientId == patientId && a.ScheduledTime >= DateTime.UtcNow)
+                .Where(a => a.PatientId == patientId && a.AppointmentDate >= DateTime.UtcNow)
                 .Join(_context.DoctorDetails,
                     appointment => appointment.DoctorId,
                     doctor => doctor.DoctorId,
                     (appointment, doctor) => new
                     {
                         appointment.AppointmentId,
-                        appointment.ScheduledTime,
+                        appointment.AppointmentDate,
                         appointment.Status,
-                        appointment.VideoCallLink,
+                        appointment.Reason,
                         DoctorFullName = doctor.FullName
                     })
-                .OrderBy(a => a.ScheduledTime)
+                .OrderBy(a => a.AppointmentDate)
                 .ToListAsync();
 
             return Ok(upcomingAppointments);
@@ -73,18 +73,18 @@ public class PatientAppointmentController : ApiControllerBase
         try
         {
             var pastAppointments = await _context.Appointments
-                .Where(a => a.PatientId == patientId && a.ScheduledTime < DateTime.UtcNow)
+                .Where(a => a.PatientId == patientId && a.AppointmentDate < DateTime.UtcNow)
                 .Join(_context.DoctorDetails,
                     appointment => appointment.DoctorId,
                     doctor => doctor.DoctorId,
                     (appointment, doctor) => new
                     {
                         appointment.AppointmentId,
-                        appointment.ScheduledTime,
+                        appointment.AppointmentDate,
                         appointment.Status,
                         DoctorFullName = doctor.FullName
                     })
-                .OrderByDescending(a => a.ScheduledTime)
+                .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
 
             return Ok(pastAppointments);
@@ -121,8 +121,8 @@ public class PatientAppointmentController : ApiControllerBase
         var today = DateTime.UtcNow.Date;
 
         var appointments = await _context.Appointments
-            .Where(a => a.PatientId == patientId && a.ScheduledTime.Date == today && a.Status != "Cancelled")
-            .OrderBy(a => a.ScheduledTime)
+            .Where(a => a.PatientId == patientId && a.AppointmentDate == today && a.Status != "Cancelled")
+            .OrderBy(a => a.AppointmentDate)
             .Join(_context.DoctorDetails,
                 appointment => appointment.DoctorId,
                 doctor => doctor.DoctorId,
@@ -133,7 +133,7 @@ public class PatientAppointmentController : ApiControllerBase
                 (result, patient) => new
                 {
                     result.appointment.AppointmentId,
-                    result.appointment.ScheduledTime,
+                    result.appointment.AppointmentDate,
                     result.appointment.DoctorId,
                     result.appointment.Status,
                     PatientId = patient.PatientId,
@@ -155,9 +155,9 @@ public class PatientAppointmentController : ApiControllerBase
 
         var upcomingAppointments = await _context.Appointments
             .Where(a => a.PatientId == patientId &&
-                        a.ScheduledTime.Date > today && 
+                        a.AppointmentDate > today && 
                         a.Status != "Cancelled")
-            .OrderBy(a => a.ScheduledTime)
+            .OrderBy(a => a.AppointmentDate)
             .Join(_context.DoctorDetails,
                 appointment => appointment.DoctorId,
                 doctor => doctor.DoctorId,
@@ -168,7 +168,7 @@ public class PatientAppointmentController : ApiControllerBase
                 (result, patient) => new
                 {
                     result.appointment.AppointmentId,
-                    result.appointment.ScheduledTime,
+                    result.appointment.AppointmentDate,
                     result.appointment.DoctorId,
                     result.appointment.Status,
                     PatientId = patient.PatientId,

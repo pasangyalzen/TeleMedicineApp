@@ -2,27 +2,33 @@ namespace TeleMedicineApp.Areas.Admin.Models
 {
     public class AppointmentDetailsViewModel
     {
-        public string DoctorName { get; set; }  // Doctor's name
-        public string PatientName { get; set; }  // Patient's name
-        public DateTime ScheduledTime { get; set; }  // Scheduled time (without seconds and milliseconds)
-        public string Status { get; set; }  // Appointment status
-        public string VideoCallLink { get; set; }  // Link for video call
-        
-        // Method to ensure the ScheduledTime is normalized
-        public void NormalizeScheduledTime()
+        public int DoctorId { get; set; }          // Doctor's ID
+        public int PatientId { get; set; }         // Patient's ID
+        public string DoctorName { get; set; }     // (Optional) Display purpose
+        public string PatientName { get; set; }    // (Optional) Display purpose
+        public DateTime AppointmentDate { get; set; } // Only the date (no time component)
+        public TimeSpan StartTime { get; set; }    // Appointment start time
+        public TimeSpan EndTime { get; set; }      // Appointment end time
+        public string Status { get; set; }         // Appointment status (e.g., Scheduled, Completed)
+        public string Reason { get; set; }         // Reason for appointment or video call link
+
+        // Normalize to remove seconds and milliseconds
+        public void NormalizeAppointmentTime()
         {
-            // Normalize to hours and minutes, setting seconds and milliseconds to zero
-            ScheduledTime = ScheduledTime.AddSeconds(-ScheduledTime.Second).AddMilliseconds(-ScheduledTime.Millisecond);
+            StartTime = TimeSpan.FromMinutes(Math.Floor(StartTime.TotalMinutes));
+            EndTime = TimeSpan.FromMinutes(Math.Floor(EndTime.TotalMinutes));
+            AppointmentDate = AppointmentDate.Date;
         }
 
-        // Validate the AppointmentDetailsViewModel before saving
+        // Validation method for appointment input
         public bool IsValid()
         {
-            return !string.IsNullOrEmpty(DoctorName) && 
-                   !string.IsNullOrEmpty(PatientName) &&
-                   ScheduledTime != DateTime.MinValue && 
-                   !string.IsNullOrEmpty(Status) && 
-                   !string.IsNullOrEmpty(VideoCallLink);
+            return DoctorId > 0 &&
+                   PatientId > 0 &&
+                   AppointmentDate != DateTime.MinValue &&
+                   StartTime < EndTime &&
+                   !string.IsNullOrEmpty(Status) &&
+                   !string.IsNullOrEmpty(Reason);
         }
     }
 }

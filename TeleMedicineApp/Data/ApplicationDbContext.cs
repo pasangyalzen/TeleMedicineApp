@@ -27,6 +27,7 @@ namespace TeleMedicineApp.Data
         public DbSet<Consultation> Consultations { get; set; }
         public DbSet<Prescription> Prescriptions { get; set; }
         public DbSet<PrescriptionItem> PrescriptionItems { get; set; }
+        public DbSet<DoctorAvailability> DoctorAvailability { get; set; }
         
         // Optional: You can add additional configurations for relationships or table names here if necessary.
         

@@ -24,8 +24,8 @@ namespace TeleChaukiDB.Models
         [StringLength(50)]
         public string Status { get; set; } // Example: "Pending", "Completed", "Cancelled"
 
-        [StringLength(500)]
-        public string? VideoCallLink { get; set; } // Link for video consultation
+        // [StringLength(500)]
+        // public string? VideoCallLink { get; set; } // Link for video consultation
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Auto-set creation date
         public DateTime? UpdatedAt { get; set; } // Updated timestamp

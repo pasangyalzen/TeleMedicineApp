@@ -11,11 +11,10 @@ using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Doctor.Controllers;
 
-[Authorize(Roles = "Doctor,Patient")] // Default authorization for all actions
+[Authorize(Roles = "SuperAdmin,Doctor,Patient")]
 [Area("Doctor")]
 [Route("api/[area]/[action]")]
 [ApiController]
-
 public class DoctorAppointmentController : ApiControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
@@ -23,44 +22,41 @@ public class DoctorAppointmentController : ApiControllerBase
     private readonly ILogger _logger;
     private readonly ApplicationDbContext _context;
 
-
     public DoctorAppointmentController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         ILoggerFactory loggerFactory)
-
     {
         _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = loggerFactory.CreateLogger<DoctorAppointmentController>();
-
     }
 
     [HttpGet("{doctorId}")]
     public async Task<IActionResult> GetTodaysAppointments(int doctorId)
     {
-        var today = DateTime.UtcNow.Date; // Get today's date (UTC)
+        var today = DateTime.UtcNow.Date;
 
         var appointments = await _context.Appointments
-            .Where(a => a.DoctorId == doctorId && a.ScheduledTime.Date == today &&
-                        a.Status != "Cancelled" && a.Status != "Completed") // Use ScheduledTime
-            .OrderBy(a => a.ScheduledTime) // Sort by ScheduledTime
+            .Where(a => a.DoctorId == doctorId && a.AppointmentDate == today &&
+                        a.Status != "Cancelled" && a.Status != "Completed")
+            .OrderBy(a => a.AppointmentDate)
             .Join(_context.PatientDetails,
                 appointment => appointment.PatientId,
                 patient => patient.PatientId,
-                (appointment, patient) => new { appointment, patient }) // Join with PatientDetails
+                (appointment, patient) => new { appointment, patient })
             .Join(_context.DoctorDetails,
                 appointment => appointment.appointment.DoctorId,
                 doctor => doctor.DoctorId,
                 (appointment, doctor) => new
                 {
                     appointment.appointment.AppointmentId,
-                    appointment.appointment.ScheduledTime,
+                    appointment.appointment.AppointmentDate,
                     appointment.patient.PatientId,
-                    PatientName = appointment.patient.FullName, // Assuming FullName in PatientDetails
-                    DoctorName = doctor.FullName, // Assuming FullName in DoctorDetail
+                    PatientName = appointment.patient.FullName,
+                    DoctorName = doctor.FullName,
                     appointment.appointment.Status
                 })
             .ToListAsync();
@@ -74,22 +70,18 @@ public class DoctorAppointmentController : ApiControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetDoctorIdByUserId(string userId)
     {
-        // Find the doctor using the userId as a foreign key and only retrieve the DoctorId
         var doctorId = await _context.DoctorDetails
             .Where(d => d.UserId == userId)
             .Select(d => d.DoctorId)
             .FirstOrDefaultAsync();
 
-        // Check if doctorId is found, if not return NotFound
-        if (doctorId == 0) // 0 indicates no record was found
+        if (doctorId == 0)
         {
             return NotFound(new { message = "Doctor not found for the given UserId." });
         }
 
-        // Return the DoctorId
         return Ok(doctorId);
     }
-
 
     [HttpPut("{appointmentId}")]
     public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromBody] DateTime newDateTime)
@@ -98,10 +90,8 @@ public class DoctorAppointmentController : ApiControllerBase
         if (appointment == null)
             return NotFound("Appointment not found.");
 
-        // Store the local time directly as UTC in the database
-        appointment.ScheduledTime = newDateTime; // This stores the received time as UTC
-
-        appointment.Status = "Rescheduled"; // Update status if needed
+        appointment.AppointmentDate = newDateTime;
+        appointment.Status = "Rescheduled";
 
         _context.Appointments.Update(appointment);
         await _context.SaveChangesAsync();
@@ -112,7 +102,6 @@ public class DoctorAppointmentController : ApiControllerBase
     [HttpPut("{appointmentId}")]
     public async Task<IActionResult> CancelAppointment(int appointmentId)
     {
-        // Find the appointment using the appointmentId
         var appointment = await _context.Appointments.FindAsync(appointmentId);
 
         if (appointment == null)
@@ -120,55 +109,46 @@ public class DoctorAppointmentController : ApiControllerBase
             return NotFound("Appointment not found.");
         }
 
-        // Update the status to 'Cancelled'
         appointment.Status = "Cancelled";
 
-        // Save the changes to the database
         _context.Appointments.Update(appointment);
         await _context.SaveChangesAsync();
 
         return Ok("Appointment cancelled successfully.");
     }
 
-
     [HttpGet("{doctorId}")]
     public async Task<IActionResult> GetPastAppointments(int doctorId)
     {
-        // Step 1: Get all completed appointments for the doctor
         var appointments = await _context.Appointments
             .Where(a => a.DoctorId == doctorId &&
-                        a.ScheduledTime <= DateTime.UtcNow &&
+                        a.AppointmentDate <= DateTime.UtcNow &&
                         a.Status == "Completed")
             .ToListAsync();
 
-        // Step 2: Handle empty result
         if (!appointments.Any())
             return NotFound("No past appointments found for this doctor.");
 
-        // Step 3: Sequentially build the result list
         var result = new List<object>();
 
         foreach (var a in appointments)
         {
-            // Fetch doctor name
             var doctorName = await _context.DoctorDetails
                 .Where(d => d.DoctorId == a.DoctorId)
                 .Select(d => d.FullName)
                 .FirstOrDefaultAsync();
 
-            // Fetch patient name
             var patientName = await _context.PatientDetails
                 .Where(p => p.PatientId == a.PatientId)
                 .Select(p => p.FullName)
                 .FirstOrDefaultAsync();
 
-            // Build the appointment object
             result.Add(new
             {
                 a.AppointmentId,
-                a.ScheduledTime,
+                a.AppointmentDate,
                 a.Status,
-                a.VideoCallLink,
+                a.Reason,
                 a.CreatedAt,
                 a.UpdatedAt,
                 a.AddedBy,
@@ -179,17 +159,16 @@ public class DoctorAppointmentController : ApiControllerBase
             });
         }
 
-        // Step 4: Return the final result
         return Ok(result);
     }
-    
+
     [HttpGet("{doctorId}")]
     public async Task<IActionResult> GetUpcomingAppointments(int doctorId)
     {
         var upcomingAppointments = await _context.Appointments
-            .Where(a => a.DoctorId == doctorId && a.ScheduledTime > DateTime.UtcNow && a.Status != "Cancelled" &&
-                        a.Status != "Completed")
-            .OrderBy(a => a.ScheduledTime)
+            .Where(a => a.DoctorId == doctorId && a.AppointmentDate > DateTime.UtcNow &&
+                        a.Status != "Cancelled" && a.Status != "Completed")
+            .OrderBy(a => a.AppointmentDate)
             .Join(_context.PatientDetails,
                 appointment => appointment.PatientId,
                 patient => patient.PatientId,
@@ -200,14 +179,14 @@ public class DoctorAppointmentController : ApiControllerBase
                 (joined, doctor) => new
                 {
                     joined.appointment.AppointmentId,
-                    joined.appointment.ScheduledTime,
+                    joined.appointment.AppointmentDate,
                     joined.appointment.Status,
-                    joined.appointment.VideoCallLink,
+                    joined.appointment.Reason,
                     joined.appointment.CreatedAt,
                     joined.appointment.UpdatedAt,
                     joined.appointment.AddedBy,
-                    DoctorId = doctor.DoctorId, // ✅ explicitly included
-                    PatientId = joined.patient.PatientId, // ✅ explicitly included
+                    DoctorId = doctor.DoctorId,
+                    PatientId = joined.patient.PatientId,
                     PatientName = joined.patient.FullName,
                     DoctorName = doctor.FullName
                 })
@@ -218,8 +197,6 @@ public class DoctorAppointmentController : ApiControllerBase
 
         return Ok(upcomingAppointments);
     }
-
-
 
     [HttpPut("{appointmentId}")]
     public async Task<IActionResult> UpdateAppointmentStatus(int appointmentId, [FromBody] string newStatus)
@@ -240,15 +217,15 @@ public class DoctorAppointmentController : ApiControllerBase
     {
         var cancelledAppointments = await _context.Appointments
             .Where(a => a.DoctorId == doctorId && a.Status == "Cancelled")
-            .OrderBy(a => a.ScheduledTime)
+            .OrderBy(a => a.AppointmentDate)
             .Select(a => new
             {
                 a.AppointmentId,
                 a.DoctorId,
                 a.PatientId,
-                a.ScheduledTime,
+                a.AppointmentDate,
                 a.Status,
-                a.VideoCallLink,
+                a.Reason,
                 a.CreatedAt,
                 a.UpdatedAt,
                 a.AddedBy
@@ -283,7 +260,7 @@ public class DoctorAppointmentController : ApiControllerBase
             .CountAsync();
 
         var todayAppointments = await _context.Appointments
-            .Where(a => a.DoctorId == doctorId && a.ScheduledTime.Date == today)
+            .Where(a => a.DoctorId == doctorId && a.AppointmentDate == today)
             .CountAsync();
 
         var rescheduledAppointments = await _context.Appointments
@@ -307,7 +284,6 @@ public class DoctorAppointmentController : ApiControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetDoctorIdByEmail(string email)
     {
-        // Step 1: Find the user by email to get UserId
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
@@ -315,7 +291,6 @@ public class DoctorAppointmentController : ApiControllerBase
             return NotFound(new { message = "User not found with the given email." });
         }
 
-        // Step 2: Find the DoctorId using the UserId
         var doctorId = await _context.DoctorDetails
             .Where(d => d.UserId == user.Id)
             .Select(d => d.DoctorId)
@@ -337,14 +312,12 @@ public class DoctorAppointmentController : ApiControllerBase
             return BadRequest(new { message = "Consultation data is missing" });
         }
 
-        // Validate the AppointmentId
         var appointment = await _context.Appointments.FindAsync(dto.AppointmentId);
         if (appointment == null)
         {
             return NotFound(new { message = "Appointment not found" });
         }
 
-        // Create a new Consultation entity using the data from the DTO
         var consultation = new Consultation
         {
             AppointmentId = dto.AppointmentId,
@@ -353,7 +326,6 @@ public class DoctorAppointmentController : ApiControllerBase
             CreatedAt = DateTime.UtcNow
         };
 
-        // Add to DB
         _context.Consultations.Add(consultation);
         await _context.SaveChangesAsync();
 
@@ -365,12 +337,10 @@ public class DoctorAppointmentController : ApiControllerBase
     }
 
     [HttpGet]
-    
     public async Task<IActionResult> GetPrescription(int prescriptionId)
     {
-        // Check if the prescription exists
         var prescription = await _context.Prescriptions
-            .Include(p => p.PrescriptionItems) // If you want to include related items
+            .Include(p => p.PrescriptionItems)
             .FirstOrDefaultAsync(p => p.PrescriptionId == prescriptionId);
 
         if (prescription == null)
@@ -380,12 +350,12 @@ public class DoctorAppointmentController : ApiControllerBase
 
         return Ok(prescription);
     }
-    
+
     [HttpGet("{appointmentId}")]
     public async Task<IActionResult> GetPrescriptionByAppointmentId(int appointmentId)
     {
         var prescription = await _context.Prescriptions
-            .Include(p => p.PrescriptionItems) // Make sure this navigation property exists
+            .Include(p => p.PrescriptionItems)
             .FirstOrDefaultAsync(p => p.Consultation.AppointmentId == appointmentId);
 
         if (prescription == null)
@@ -409,7 +379,6 @@ public class DoctorAppointmentController : ApiControllerBase
         return Ok(result);
     }
 
-    // 2. Endpoint for creating Prescription
     [HttpPost]
     public async Task<IActionResult> CreatePrescription([FromBody] PrescriptionRequestDTO prescriptionRequest)
     {
@@ -419,14 +388,12 @@ public class DoctorAppointmentController : ApiControllerBase
             return BadRequest(new { message = "Prescription data is missing or empty" });
         }
 
-        // Validate the ConsultationId
         var consultation = await _context.Consultations.FindAsync(prescriptionRequest.ConsultationId);
         if (consultation == null)
         {
             return NotFound(new { message = "Consultation not found" });
         }
 
-        // Create the Prescription
         var prescription = new Prescription
         {
             ConsultationId = prescriptionRequest.ConsultationId,
@@ -434,9 +401,8 @@ public class DoctorAppointmentController : ApiControllerBase
         };
 
         _context.Prescriptions.Add(prescription);
-        await _context.SaveChangesAsync(); // Save the prescription first to get the PrescriptionId
+        await _context.SaveChangesAsync();
 
-        // Add Prescription Items
         foreach (var item in prescriptionRequest.PrescriptionItems)
         {
             var prescriptionItem = new PrescriptionItem
@@ -452,57 +418,186 @@ public class DoctorAppointmentController : ApiControllerBase
             _context.PrescriptionItems.Add(prescriptionItem);
         }
 
-        // Save the changes for prescription items
         await _context.SaveChangesAsync();
 
-        // Optionally, return the created prescription and items
-        return CreatedAtAction(nameof(GetPrescription), new { id = prescription.PrescriptionId }, prescription);
+        return Ok(new { message = "Prescription created successfully" });
+    }
+    [HttpPost]
+public async Task<IActionResult> SetAvailability(DoctorAvailabilityDto availabilityDto)
+{
+    if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+
+    var newStart = availabilityDto.StartTime;  // TimeSpan
+    var newEnd = availabilityDto.EndTime;      // TimeSpan
+
+    var buffer = TimeSpan.FromMinutes(availabilityDto.BufferTimeInMinutes);
+
+    // Get all existing availability for the doctor on the same day
+    var existingAvailabilities = await _context.DoctorAvailability
+        .Where(d => d.DoctorId == availabilityDto.DoctorId && d.DayOfWeek == availabilityDto.DayOfWeek)
+        .ToListAsync();
+
+    foreach (var existing in existingAvailabilities)
+    {
+        // Skip overlap check against itself when updating
+        if (availabilityDto.AvailabilityId != 0 && availabilityDto.AvailabilityId == existing.AvailabilityId)
+            continue;
+
+        var existingStartWithBuffer = existing.StartTime - TimeSpan.FromMinutes(existing.BufferTimeInMinutes);
+        var existingEndWithBuffer = existing.EndTime + TimeSpan.FromMinutes(existing.BufferTimeInMinutes);
+
+        bool overlaps = newStart < existingEndWithBuffer && newEnd > existingStartWithBuffer;
+
+        if (overlaps)
+            return BadRequest("Doctor already has availability set that overlaps with this time slot including buffer time.");
     }
 
-    [HttpGet("{appointmentId}")]
-    public async Task<IActionResult> GetConsultationIdByAppointment(int appointmentId)
+    if (availabilityDto.AvailabilityId != 0)
     {
-        // Find the consultation that references the given appointmentId
-        var consultation = await _context.Consultations
-            .FirstOrDefaultAsync(c => c.AppointmentId == appointmentId);
+        // Update existing availability
+        var existingAvailability = existingAvailabilities.FirstOrDefault(d => d.AvailabilityId == availabilityDto.AvailabilityId);
+        if (existingAvailability == null)
+            return NotFound("Availability record not found.");
 
-        // If no consultation is found, return NotFound response
-        if (consultation == null)
+        existingAvailability.StartTime = newStart;
+        existingAvailability.EndTime = newEnd;
+        existingAvailability.AppointmentDurationInMinutes = availabilityDto.AppointmentDurationInMinutes;
+        existingAvailability.BufferTimeInMinutes = availabilityDto.BufferTimeInMinutes;
+        existingAvailability.UpdatedAt = DateTime.Now;
+    }
+    else
+    {
+        // Add new availability
+        var newAvailability = new DoctorAvailability
         {
-            return NotFound(new { message = "Consultation not found for the given Appointment ID" });
+            DoctorId = availabilityDto.DoctorId,
+            DayOfWeek = availabilityDto.DayOfWeek,
+            StartTime = newStart,
+            EndTime = newEnd,
+            AppointmentDurationInMinutes = availabilityDto.AppointmentDurationInMinutes,
+            BufferTimeInMinutes = availabilityDto.BufferTimeInMinutes,
+            CreatedAt = DateTime.Now
+        };
+
+        _context.DoctorAvailability.Add(newAvailability);
+    }
+
+    await _context.SaveChangesAsync();
+
+    return Ok("Availability saved successfully.");
+}
+    
+    [HttpDelete("{availabilityId}")]
+    public async Task<IActionResult> DeleteAvailability(int availabilityId)
+    {
+        var availability = await _context.DoctorAvailability
+            .FirstOrDefaultAsync(a => a.AvailabilityId == availabilityId);
+
+        if (availability == null)
+        {
+            return NotFound("Availability not found.");
         }
 
-        // Return the ConsultationId in the response
-        return Ok(new { consultationId = consultation.ConsultationId });
+        _context.DoctorAvailability.Remove(availability);
+        await _context.SaveChangesAsync();
+
+        return Ok("Availability deleted successfully.");
+    }
+    [HttpGet("{doctorId}")]
+    public async Task<IActionResult> GetAvailability(int doctorId)
+    {
+        // Fetch all availability records for this doctor
+        var availabilities = await _context.DoctorAvailability
+            .Where(d => d.DoctorId == doctorId)
+            .OrderBy(d => d.DayOfWeek)
+            .ToListAsync();
+
+        if (availabilities == null || availabilities.Count == 0)
+            return NotFound("No availability found for the specified doctor.");
+
+        // You can map or return the data directly
+        // For example, returning the raw data is fine:
+        return Ok(availabilities);
+    }
+    [HttpGet]
+    public async Task<IActionResult> GetDoctorsBySpecialization(string specialization)
+    {
+        if (string.IsNullOrWhiteSpace(specialization))
+            return BadRequest("Specialization is required.");
+
+        var doctors = await (from doctor in _context.DoctorDetails
+            join user in _context.Users
+                on doctor.UserId equals user.Id
+            where doctor.Specialization.ToLower().Contains(specialization.ToLower())
+            select new
+            {
+                doctor.DoctorId,
+                doctor.FullName,
+                user.Email,
+                doctor.PhoneNumber,
+                doctor.Specialization
+            }).ToListAsync();
+
+        if (doctors == null || !doctors.Any())
+            return NotFound("No doctors found for the given specialization.");
+
+        return Ok(doctors);
     }
     
-    [HttpGet("{consultationId}")]
-    public async Task<IActionResult> GetConsultationById(int consultationId)
+    [HttpGet]
+    public async Task<IActionResult> GetDoctorAvailabilityById(int doctorId)
     {
-        try
-        {
-            var consultation = await _context.Consultations
-                .Where(c => c.ConsultationId == consultationId)
-                .Select(c => new
-                {
-                    c.ConsultationId,
-                    c.AppointmentId,
-                    c.Notes,
-                    c.Recommendations,
-                    c.CreatedAt
-                })
-                .FirstOrDefaultAsync();
+        if (doctorId <= 0)
+            return BadRequest("Invalid Doctor ID.");
 
-            if (consultation == null)
+        var availabilities = await _context.DoctorAvailability
+            .Where(a => a.DoctorId == doctorId)
+            .OrderBy(a => a.DayOfWeek)
+            .Select(a => new
             {
-                return NotFound("Consultation not found.");
-            }
+                a.DayOfWeek,
+                StartTime = a.StartTime.ToString(@"hh\:mm"),
+                EndTime = a.EndTime.ToString(@"hh\:mm"),
+                a.AppointmentDurationInMinutes,
+                a.BufferTimeInMinutes
+            })
+            .ToListAsync();
 
-            return Ok(consultation);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"An error occurred while fetching the consultation: {ex.Message}");
-        }
+        if (availabilities == null || !availabilities.Any())
+            return NotFound("No availability found for this doctor.");
+
+        return Ok(availabilities);
     }
+    
+    [HttpGet]
+    public async Task<IActionResult> SearchPatients(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return BadRequest("Search query is required.");
+
+        query = query.ToLower();
+
+        var patients = await (from p in _context.PatientDetails
+            join u in _context.Users
+                on p.UserId equals u.Id
+            where p.FullName.ToLower().Contains(query)
+                  || u.Email.ToLower().Contains(query)
+                  || u.PhoneNumber.Contains(query)
+            select new
+            {
+                p.PatientId,
+                p.FullName,
+                u.Email,
+                p.PhoneNumber,
+                p.DateOfBirth,
+                p.Gender
+            }).ToListAsync();
+
+        if (!patients.Any())
+            return NotFound("No matching patients found.");
+
+        return Ok(patients);
+    }
+    
 }

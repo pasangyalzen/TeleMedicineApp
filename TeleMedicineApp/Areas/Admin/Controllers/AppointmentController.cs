@@ -159,7 +159,7 @@ public class AppointmentController : ApiControllerBase
                 return BadRequest("Invalid appointment details");
 
             // Normalize ScheduledTime to remove seconds and milliseconds
-            model.NormalizeScheduledTime();
+            model.NormalizeAppointmentTime();
 
             string username = User.Identity?.Name ?? "StaticUser";
 

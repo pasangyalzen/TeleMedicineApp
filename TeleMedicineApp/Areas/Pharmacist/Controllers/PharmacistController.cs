@@ -15,7 +15,7 @@ using TeleMedicineApp.Controllers;
 
 namespace TeleMedicineApp.Areas.Pharmacist.Controllers
 {
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = "SuperAdmin, Pharmacist")]
     [Area("Pharmacist")]
     [Route("api/[area]/[action]")]
     [ApiController]
@@ -42,68 +42,54 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RegisterPharmacist([FromBody] RegisterPharmacistDTO registerPharmacistDTO)
+        [AllowAnonymous]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> RegisterPharmacist([FromForm] RegisterPharmacistDTO dto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            if (registerPharmacistDTO.Password != registerPharmacistDTO.ConfirmPassword)
+            _logger.LogInformation("📥 Registering new pharmacist: {FullName}, Phone: {PhoneNumber}", dto.FullName, dto.PhoneNumber);
+
+            string imagePath = null;
+            if (dto.ProfileImage != null && dto.ProfileImage.Length > 0)
             {
-                return BadRequest("Passwords do not match.");
-            }
+                var ext = Path.GetExtension(dto.ProfileImage.FileName).ToLower();
+                var allowed = new[] { ".jpg", ".jpeg", ".png" };
 
-            if (!IsValidPassword(registerPharmacistDTO.Password))
-            {
-                return BadRequest("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character (@$!%*?&), and must be at least 8 characters long.");
-            }
+                if (!allowed.Contains(ext))
+                    return BadRequest("Only jpg, jpeg, and png formats are allowed.");
 
-            var existingUser = await _userManager.FindByEmailAsync(registerPharmacistDTO.Email);
-            if (existingUser != null)
-            {
-                return BadRequest("Email is already in use.");
-            }
+                if (dto.ProfileImage.Length > 2 * 1024 * 1024)
+                    return BadRequest("Max image size is 2MB.");
 
-            if (registerPharmacistDTO.DateOfBirth > DateTime.UtcNow.AddYears(-18))
-            {
-                return BadRequest("Pharmacist must be at least 18 years old.");
-            }
+                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "pharmacists");
+                Directory.CreateDirectory(uploadDir);
 
-            // if (!Uri.IsWellFormedUriString(registerPharmacistDTO.ProfileImage, UriKind.Absolute))
-            // {
-            //     return BadRequest("Profile image URL is not valid.");
-            // }
+                var fileName = Guid.NewGuid().ToString() + ext;
+                var filePath = Path.Combine(uploadDir, fileName);
 
-            var user = new ApplicationUser
-            {
-                UserName = registerPharmacistDTO.Email,
-                Email = registerPharmacistDTO.Email
-            };
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await dto.ProfileImage.CopyToAsync(stream);
 
-            var result = await _userManager.CreateAsync(user, registerPharmacistDTO.Password);
-            if (!result.Succeeded)
-            {
-                return BadRequest("User registration failed.");
-            }
-
-            var roleResult = await _userManager.AddToRoleAsync(user, "Pharmacist");
-            if (!roleResult.Succeeded)
-            {
-                return BadRequest("Failed to assign role.");
+                imagePath = "/uploads/pharmacists/" + fileName;
             }
 
             var pharmacistDetails = new PharmacistDetails
             {
-                UserId = user.Id,
-                FullName = registerPharmacistDTO.FullName,
-                PhoneNumber = registerPharmacistDTO.PhoneNumber,
-                Gender = registerPharmacistDTO.Gender,
-                DateOfBirth = registerPharmacistDTO.DateOfBirth,
-                LicenseNumber = registerPharmacistDTO.LicenseNumber,
-                PharmacyName = registerPharmacistDTO.PharmacyName,
-                ProfileImage = registerPharmacistDTO.ProfileImage,
-                // Status = true, // Active by default
+                UserId = dto.UserId,
+                FullName = dto.FullName,
+                PhoneNumber = dto.PhoneNumber,
+                Gender = dto.Gender,
+                DateOfBirth = dto.DateOfBirth,
+                PharmacyName = dto.PharmacyName,
+                LicenseNumber = dto.LicenseNumber,
+                PharmacyAddress = dto.PharmacyAddress,
+                WorkingHours = dto.WorkingHours,
+                ServicesOffered = dto.ServicesOffered,
+                ProfileImage = imagePath,
+                // DoctorId = dto.DoctorId,
+                // PatientId = dto.PatientId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -121,27 +107,39 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllPharmacists(string search = "", string sortColumn = "CreatedAt", string sortOrder = "ASC", int page = 1, int pageSize = 5)
+        public async Task<IActionResult> GetAllPharmacists(
+            string search = "", 
+            string sortColumn = "CreatedAt", 
+            string sortOrder = "ASC", 
+            int page = 1, 
+            int pageSize = 5)
         {
             try
             {
-                var offset = (page - 1) * pageSize;
-                var pharmacists = await _pharmacistManager.GetAllPharmacists(offset, pageSize, search, sortColumn, sortOrder);
+                // Calculate offset for pagination
+                int offset = (page - 1) * pageSize;
+
+                // Fetch paginated list of pharmacists
+                var pharmacists = await _pharmacistManager.GetTotalPharmacists(offset, pageSize, search, sortColumn, sortOrder);
 
                 if (pharmacists == null || !pharmacists.Any())
                 {
                     return NotFound("There are no pharmacists.");
                 }
 
-                return Ok(pharmacists);
+                return Ok(new
+                {
+                    currentPage = page,
+                    pageSize = pageSize,
+                    pharmacists
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in GetAllPharmacists");
-                return StatusCode(500, new { message = "Error retrieving pharmacists", details = ex.Message });
+                return StatusCode(500, "An error occurred while fetching pharmacist data.");
             }
         }
-
         [HttpGet("{id}")]
         public async Task<ActionResult<PharmacistDetailsViewModel>> GetPharmacistById(int id)
         {
@@ -240,6 +238,28 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = "Error retrieving userId for pharmacist", details = ex.Message });
+            }
+        }
+        [HttpPut("{pharmacistId}")]
+        public async Task<IActionResult> TogglePharmacistStatus(int pharmacistId)
+        {
+            var pharmacist = await _context.PharmacistDetails.FindAsync(pharmacistId);
+            if (pharmacist == null)
+            {
+                return NotFound(new { message = "Pharmacist not found." });
+            }
+
+            pharmacist.Status = !pharmacist.Status;
+            pharmacist.UpdatedAt = DateTime.UtcNow;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Pharmacist status updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while updating status.", error = ex.Message });
             }
         }
     }

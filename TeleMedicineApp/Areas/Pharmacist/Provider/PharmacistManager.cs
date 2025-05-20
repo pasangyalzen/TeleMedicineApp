@@ -20,36 +20,34 @@ namespace TeleMedicineApp.Areas.Admin.Provider
         }
 
         // Get all pharmacists with pagination, filtering, and sorting
-        public async Task<List<PharmacistDetailsViewModel>> GetAllPharmacists(int offset, int limit,
+        public async Task<List<PharmacistDetailsViewModel>> GetTotalPharmacists(int offset, int limit,
             string searchKeyword = "", string sortColumn = "CreatedAt", string sortOrder = "ASC")
         {
             try
             {
                 // Instantiate SQLHandlerAsync to handle database operations
                 SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
-        
+
                 // Prepare the parameters to pass into the stored procedure
                 IList<KeyValue> param = new List<KeyValue>
                 {
                     new KeyValue("@Offset", offset),
                     new KeyValue("@Limit", limit),
-                    new KeyValue("@SearchKeyword", searchKeyword),
+                    new KeyValue("@SearchKeyword", string.IsNullOrEmpty(searchKeyword) ? DBNull.Value : searchKeyword),
                     new KeyValue("@SortColumn", sortColumn),
                     new KeyValue("@SortOrder", sortOrder)
                 };
 
                 // Execute the stored procedure and map the result to a list of PharmacistDetailsViewModel
                 var result = await sqlHelper.ExecuteAsListAsync<PharmacistDetailsViewModel>("[dbo].[usp_GetAllPharmacists]", param);
-        
-                // Return the list of pharmacists
+
                 return result;
             }
             catch (Exception ex)
             {
                 // Log the error (you may use a logger here)
                 Console.WriteLine($"Error retrieving pharmacists: {ex.Message}");
-        
-                // Optionally, return an empty list in case of failure:
+
                 return new List<PharmacistDetailsViewModel>();
             }
         }

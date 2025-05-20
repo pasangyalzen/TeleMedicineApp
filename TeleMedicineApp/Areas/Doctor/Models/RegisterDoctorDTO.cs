@@ -5,6 +5,7 @@ using TeleMedicineApp.Attributes;
 
 public class RegisterDoctorDTO
 {
+    
     [Required(ErrorMessage = "User ID is required.")]
     public string UserId { get; set; }
 

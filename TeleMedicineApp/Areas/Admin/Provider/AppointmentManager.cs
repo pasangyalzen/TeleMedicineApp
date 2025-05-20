@@ -18,7 +18,7 @@ public class AppointmentManager
         _doctorManager = doctorManager; // Initialize the dependency
     }
     [HttpGet]
-    public async Task<List<AppointmentUpdateViewModel>> GetTotalAppointments(int offset, int limit,
+    public async Task<List<AppointmentDetailsViewModel>> GetTotalAppointments(int offset, int limit,
         string searchKeyword = "", string sortColumn = "CreatedAt", string sortOrder = "ASC")
     {
         SQLHandlerAsync sqlHelper = new SQLHandlerAsync();
@@ -29,7 +29,7 @@ public class AppointmentManager
         param.Add(new KeyValue("@SortColumn", sortColumn));
         param.Add(new KeyValue("@SortOrder", sortOrder));
         
-        var result = await sqlHelper.ExecuteAsListAsync<AppointmentUpdateViewModel>("[dbo].[usp_GetTotalAppointments]", param);
+        var result = await sqlHelper.ExecuteAsListAsync<AppointmentDetailsViewModel>("[dbo].[usp_GetTotalAppointments]", param);
         return result;
 
     }
@@ -115,11 +115,12 @@ public class AppointmentManager
             IList<KeyValue> param = new List<KeyValue>();
 
             // Prepare parameters for the stored procedure
-            param.Add(new KeyValue("@DoctorName", appointment.DoctorName));
-            param.Add(new KeyValue("@PatientName", appointment.PatientName));
-            param.Add(new KeyValue("@ScheduledTime", appointment.ScheduledTime));
-            param.Add(new KeyValue("@VideoCallLink", appointment.VideoCallLink));
-            param.Add(new KeyValue("@AddedBy", username));
+            param.Add(new KeyValue("@DoctorId", appointment.DoctorId));
+            param.Add(new KeyValue("@PatientId", appointment.PatientId));
+            param.Add(new KeyValue("@AppointmentDate", appointment.AppointmentDate.ToString("yyyy-MM-dd"))); // Ensure date format
+            param.Add(new KeyValue("@StartTime", appointment.StartTime.ToString(@"hh\:mm"))); // TimeSpan to string (hh:mm)
+            param.Add(new KeyValue("@EndTime", appointment.EndTime.ToString(@"hh\:mm")));
+            param.Add(new KeyValue("@Reason", appointment.Reason));
 
             // Execute the stored procedure and retrieve the newly created appointment ID
             var appointmentId = await sqlHelper.ExecuteAsScalarAsync<int>("[dbo].[usp_CreateAppointment]", param);

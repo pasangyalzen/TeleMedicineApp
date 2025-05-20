@@ -52,6 +52,7 @@ namespace TeleMedicineApp.Areas.Pharmacist.Models
         public DateTime UpdatedAt { get; set; }
 
         [EmailAddress(ErrorMessage = "Invalid email format.")]
+        public bool Status {get;set;}
 
         public int? DoctorId { get; set; }  // Foreign key to DoctorDetails
         public int? PatientId { get; set; }  // Foreign key to PatientDetails

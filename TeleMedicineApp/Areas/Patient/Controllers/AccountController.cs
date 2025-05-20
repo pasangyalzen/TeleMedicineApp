@@ -15,7 +15,7 @@ using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Patients.Controllers;
 
-[Authorize(Roles = "SuperAdmin")] // Default authorization for all actions
+[Authorize(Roles = "SuperAdmin,Patient")] // Default authorization for all actions
 [Area("Patient")]
 [Route("api/[area]/[action]")]
 [ApiController]
@@ -45,92 +45,67 @@ public class PatientController : ApiControllerBase
 
     }
     [HttpPost]
-    public async Task<IActionResult> RegisterPatient([FromBody] RegisterPatientDTO registerPatientDTO)
+[AllowAnonymous]
+[Consumes("multipart/form-data")]
+public async Task<IActionResult> RegisterPatient([FromForm] RegisterPatientDTO dto)
+{
+    if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+
+    _logger.LogInformation("📥 Registering new patient: {FullName}, Phone: {PhoneNumber}", dto.FullName, dto.PhoneNumber);
+
+    string imagePath = null;
+    if (dto.ProfileImage != null && dto.ProfileImage.Length > 0)
     {
-        // Validate ModelState (Ensures all required fields and custom validations are checked)
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+        var ext = Path.GetExtension(dto.ProfileImage.FileName).ToLower();
+        var allowed = new[] { ".jpg", ".jpeg", ".png" };
 
-        // Validate passwords match
-        if (registerPatientDTO.Password != registerPatientDTO.ConfirmPassword)
-        {
-            return BadRequest("Passwords do not match.");
-        }
+        if (!allowed.Contains(ext))
+            return BadRequest("Only jpg, jpeg, and png formats are allowed.");
 
-        // Validate Password Format (custom validation logic)
-        if (!IsValidPassword(registerPatientDTO.Password))
-        {
-            return BadRequest("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character (@$!%*?&), and must be at least 8 characters long.");
-        }
+        if (dto.ProfileImage.Length > 2 * 1024 * 1024)
+            return BadRequest("Max image size is 2MB.");
 
-        // Check if email exists
-        var existingUser = await _userManager.FindByEmailAsync(registerPatientDTO.Email);
-        if (existingUser != null)
-        {
-            return BadRequest("Email is already in use.");
-        }
+        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "patients");
+        Directory.CreateDirectory(uploadDir);
 
-        // Validate Date of Birth (Check if the patient is at least 18 years old)
-        if (registerPatientDTO.DateOfBirth > DateTime.UtcNow.AddYears(-18))
-        {
-            return BadRequest("Patient must be at least 18 years old.");
-        }
+        var fileName = Guid.NewGuid().ToString() + ext;
+        var filePath = Path.Combine(uploadDir, fileName);
 
-        // Check if ProfileImage is valid (Optional based on your use case)
-        if (!Uri.IsWellFormedUriString(registerPatientDTO.ProfileImage, UriKind.Absolute))
-        {
-            return BadRequest("Profile image URL is not valid.");
-        }
+        using var stream = new FileStream(filePath, FileMode.Create);
+        await dto.ProfileImage.CopyToAsync(stream);
 
-        // Create User in AspNetUsers
-        var user = new ApplicationUser
-        {
-            UserName = registerPatientDTO.Email,
-            Email = registerPatientDTO.Email
-        };
-
-        var result = await _userManager.CreateAsync(user, registerPatientDTO.Password);
-        if (!result.Succeeded)
-        {
-            return BadRequest("User registration failed.");
-        }
-        var roleResult = await _userManager.AddToRoleAsync(user, "Patient");
-        if (!roleResult.Succeeded)
-        {
-            return BadRequest("Failed to assign role.");
-        }
-
-        // Add User to PatientDetails table
-        var patientDetails = new PatientDetails
-        {
-            UserId = user.Id,
-            FullName = registerPatientDTO.FullName,
-            PhoneNumber = registerPatientDTO.PhoneNumber,
-            Gender = registerPatientDTO.Gender,
-            DateOfBirth = registerPatientDTO.DateOfBirth,
-            BloodGroup = registerPatientDTO.BloodGroup,
-            Address = registerPatientDTO.Address,
-            EmergencyContactName = registerPatientDTO.EmergencyContactName,
-            EmergencyContactNumber = registerPatientDTO.EmergencyContactNumber,
-            HealthInsuranceProvider = registerPatientDTO.HealthInsuranceProvider,
-            MedicalHistory = registerPatientDTO.MedicalHistory,
-            ProfileImage = registerPatientDTO.ProfileImage,
-            MaritalStatus = registerPatientDTO.MaritalStatus,
-            Allergies = registerPatientDTO.Allergies,
-            ChronicDiseases = registerPatientDTO.ChronicDiseases,
-            Medications = registerPatientDTO.Medications,
-            Status = true, // Active by default
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        _context.PatientDetails.Add(patientDetails);
-        await _context.SaveChangesAsync();
-
-        return Ok("Patient registered successfully.");
+        imagePath = "/uploads/patients/" + fileName;
     }
+
+    var patient = new PatientDetails
+    {
+        UserId = dto.UserId,
+        FullName = dto.FullName,
+        PhoneNumber = dto.PhoneNumber,
+        Gender = dto.Gender,
+        DateOfBirth = dto.DateOfBirth,
+        BloodGroup = dto.BloodGroup,
+        Address = dto.Address,
+        EmergencyContactName = dto.EmergencyContactName,
+        EmergencyContactNumber = dto.EmergencyContactNumber,
+        HealthInsuranceProvider = dto.HealthInsuranceProvider,
+        MedicalHistory = dto.MedicalHistory,
+        ProfileImage = imagePath,
+        MaritalStatus = dto.MaritalStatus,
+        Allergies = dto.Allergies,
+        ChronicDiseases = dto.ChronicDiseases,
+        Medications = dto.Medications,
+        Status = true,
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow
+    };
+
+    _context.PatientDetails.Add(patient);
+    await _context.SaveChangesAsync();
+
+    return Ok("Patient registered successfully.");
+}
 
     // Helper function for password validation
     private bool IsValidPassword(string password)
@@ -142,30 +117,38 @@ public class PatientController : ApiControllerBase
     }
     // Get all patients with pagination, filtering, and sorting
     [HttpGet]
-    public async Task<IActionResult> GetAllPatients(string search = "", string sortColumn = "CreatedAt", string sortOrder = "ASC", int page = 1, int pageSize = 5)
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAllPatients(
+        string search = "", 
+        string sortColumn = "CreatedAt", 
+        string sortOrder = "ASC", 
+        int page = 1, 
+        int pageSize = 5)
     {
         try
         {
-            // Calculate offset based on the current page and page size
-            var offset = (page - 1) * pageSize;
+            // Calculate offset for pagination
+            int offset = (page - 1) * pageSize;
 
-            // Fetch patients using the _patientManager with pagination and sorting
+            // Fetch paginated list of patients
             var patients = await _patientManager.GetAllPatients(offset, pageSize, search, sortColumn, sortOrder);
 
-            // Check if no patients were found
             if (patients == null || !patients.Any())
             {
                 return NotFound("There are no patients.");
             }
 
-            // Return the patients data as a response
-            return Ok(patients);
+            return Ok(new
+            {
+                currentPage = page,
+                pageSize = pageSize,
+                patients
+            });
         }
         catch (Exception ex)
         {
-            // Log any errors that occur
-            _logger.LogError(ex, "Error in GetAllPatients");
-            return StatusCode(500, new { message = "Error retrieving patients", details = ex.Message });
+            _logger.LogError(ex, "Error in GetPatients");
+            return StatusCode(500, "An error occurred while fetching patient data.");
         }
     }
         // Get a specific patient by ID
@@ -292,5 +275,20 @@ public class PatientController : ApiControllerBase
             {
                 return BadRequest(new { message = "Error retrieving userId for patient", details = ex.Message });
             }
+        }
+        [HttpPut("{patientId}")]
+        public async Task<IActionResult> TogglePatientStatus(int patientId)
+        {
+            var patient = await _context.PatientDetails.FindAsync(patientId);
+            if (patient == null)
+                return NotFound("Patient not found");
+
+            patient.Status = !patient.Status;
+            patient.UpdatedAt = DateTime.UtcNow;
+
+            _context.PatientDetails.Update(patient);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Patient status toggled successfully", isActive = patient.Status });
         }
 }
