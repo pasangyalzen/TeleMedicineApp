@@ -10,7 +10,7 @@ using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Doctor.Controllers;
 
-[Authorize(Roles = "SuperAdmin")] // Default authorization for all actions
+
 [Area("Doctor")]
 [Route("api/[area]/[action]")]
 [ApiController]
@@ -38,64 +38,67 @@ public class DoctorController : ApiControllerBase
     }
 
     // Register Doctor
-    [HttpPost]
-    [AllowAnonymous]
-    public async Task<IActionResult> RegisterDoctor([FromBody] RegisterDoctorDTO registerDoctorDTO)
+    
+   [HttpPost]
+[AllowAnonymous]
+[Consumes("multipart/form-data")]
+public async Task<IActionResult> RegisterDoctor([FromForm] RegisterDoctorDTO dto)
+{
+    if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+    // ✅ Log incoming data (for debugging, optional)
+    _logger.LogInformation("📥 Registering new doctor: {FullName}, Phone: {PhoneNumber}", dto.FullName, dto.PhoneNumber);
+
+    // ✅ Handle profile image upload
+    string imagePath = null;
+    if (dto.ProfileImage != null && dto.ProfileImage.Length > 0)
     {
-        // Validate passwords match
-        if (registerDoctorDTO.Password != registerDoctorDTO.ConfirmPassword)
-        {
-            return BadRequest("Passwords do not match.");
-        }
+        var ext = Path.GetExtension(dto.ProfileImage.FileName).ToLower();
+        var allowed = new[] { ".jpg", ".jpeg", ".png" };
 
-        // Check if email exists
-        var existingUser = await _userManager.FindByEmailAsync(registerDoctorDTO.Email);
-        if (existingUser != null)
-        {
-            return BadRequest("Email is already in use.");
-        }
+        if (!allowed.Contains(ext))
+            return BadRequest("Only jpg, jpeg, and png formats are allowed.");
 
-        // Create User
-        var user = new ApplicationUser
-        {
-            UserName = registerDoctorDTO.Email,
-            Email = registerDoctorDTO.Email
-        };
+        if (dto.ProfileImage.Length > 2 * 1024 * 1024)
+            return BadRequest("Max image size is 2MB.");
 
-        var result = await _userManager.CreateAsync(user, registerDoctorDTO.Password);
-        if (!result.Succeeded)
-        {
-            return BadRequest("User registration failed.");
-        }
-        var roleResult = await _userManager.AddToRoleAsync(user, "Doctor");
-        if (!roleResult.Succeeded)
-        {
-            return BadRequest("Failed to assign role.");
-        }
+        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "doctors");
+        Directory.CreateDirectory(uploadDir);
 
-        // Add User to DoctorDetails table
-        var doctorDetails = new DoctorDetails
-        {
-            UserId = user.Id,
-            FullName = registerDoctorDTO.FullName,
-            PhoneNumber = registerDoctorDTO.PhoneNumber,
-            Gender = registerDoctorDTO.Gender,
-            DateOfBirth = registerDoctorDTO.DateOfBirth,
-            LicenseNumber = registerDoctorDTO.LicenseNumber,
-            MedicalCollege = registerDoctorDTO.MedicalCollege,
-            Specialization = registerDoctorDTO.Specialization,
-            YearsOfExperience = registerDoctorDTO.YearsOfExperience,
-            ClinicName = registerDoctorDTO.ClinicName,
-            ClinicAddress = registerDoctorDTO.ClinicAddress,
-            ConsultationFee = registerDoctorDTO.ConsultationFee,
-            CreatedAt = DateTime.UtcNow
-        };
+        var fileName = Guid.NewGuid().ToString() + ext;
+        var filePath = Path.Combine(uploadDir, fileName);
 
-        _context.DoctorDetails.Add(doctorDetails);
-        await _context.SaveChangesAsync();
+        using var stream = new FileStream(filePath, FileMode.Create);
+        await dto.ProfileImage.CopyToAsync(stream);
 
-        return Ok("Doctor registered successfully.");
+        imagePath = "/uploads/doctors/" + fileName;
     }
+
+    // ✅ Create and store doctor record
+    var doctor = new DoctorDetails
+    {
+        UserId = dto.UserId,
+        FullName = dto.FullName,
+        PhoneNumber = dto.PhoneNumber,
+        Gender = dto.Gender,
+        DateOfBirth = dto.DateOfBirth,
+        LicenseNumber = dto.LicenseNumber,
+        MedicalCollege = dto.MedicalCollege,
+        Specialization = dto.Specialization,
+        YearsOfExperience = dto.YearsOfExperience,
+        ClinicName = dto.ClinicName,
+        ClinicAddress = dto.ClinicAddress,
+        ConsultationFee = dto.ConsultationFee,
+        ProfileImage = imagePath,
+        CreatedAt = DateTime.UtcNow
+    };
+
+    _context.DoctorDetails.Add(doctor);
+    await _context.SaveChangesAsync();
+
+    return Ok("Doctor registered successfully.");
+}
+
 
     
 

@@ -53,7 +53,7 @@ namespace TeleMedicineApp.Controllers
         }
 
         [HttpPost("verify-code")]
-        [AllowAnonymous]
+        [AllowAnonymous ]
         public IActionResult VerifyCode([FromBody] VerifyCodeRequest request)
         {
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Code))

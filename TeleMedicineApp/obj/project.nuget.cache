@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "88+Vp561EOA=",
+  "dgSpecHash": "BrnDd++W3Jo=",
   "success": true,
   "projectFilePath": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/TeleMedicineApp.csproj",
   "expectedPackageFiles": [
@@ -57,6 +57,7 @@
     "/Users/pasanggelzeen/.nuget/packages/microsoft.win32.systemevents/6.0.0/microsoft.win32.systemevents.6.0.0.nupkg.sha512",
     "/Users/pasanggelzeen/.nuget/packages/mimekit/4.9.0/mimekit.4.9.0.nupkg.sha512",
     "/Users/pasanggelzeen/.nuget/packages/mono.texttemplating/2.2.1/mono.texttemplating.2.2.1.nupkg.sha512",
+    "/Users/pasanggelzeen/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg.sha512",
     "/Users/pasanggelzeen/.nuget/packages/runtime.native.system.data.sqlclient.sni/4.7.0/runtime.native.system.data.sqlclient.sni.4.7.0.nupkg.sha512",
     "/Users/pasanggelzeen/.nuget/packages/runtime.win-arm64.runtime.native.system.data.sqlclient.sni/4.4.0/runtime.win-arm64.runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",
     "/Users/pasanggelzeen/.nuget/packages/runtime.win-x64.runtime.native.system.data.sqlclient.sni/4.4.0/runtime.win-x64.runtime.native.system.data.sqlclient.sni.4.4.0.nupkg.sha512",

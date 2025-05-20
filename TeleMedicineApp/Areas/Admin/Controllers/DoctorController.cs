@@ -13,7 +13,7 @@ using TeleMedicineApp.Areas.Admin.ViewModels;
 using TeleMedicineApp.Models;
 
 namespace TeleMedicineApp.Areas.Admin.Controllers;
-[Authorize (Roles = "Doctor")]  // Default authorization for all actions
+[Authorize(Roles = "SuperAdmin,Doctor")]  // Default authorization for all actions
 [Area("admin")]
 [Route("api/[area]/[action]")]
 [ApiController]
@@ -50,24 +50,38 @@ public class DoctorController : ApiControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetDoctors(string search = "", string sortColumn = "CreatedAt", string sortOrder = "ASC", int page = 1, int pageSize = 5)
+    public async Task<IActionResult> GetDoctors(
+        string search = "", 
+        string sortColumn = "CreatedAt", 
+        string sortOrder = "ASC", 
+        int page = 1, 
+        int pageSize = 5)
     {
         try
         {
-            var doctors = await _doctorManager.GetTotalDoctors(0, int.MaxValue, "", sortColumn, sortOrder);
-            Console.WriteLine(doctors);
+            // Calculate offset for pagination
+            int offset = (page - 1) * pageSize;
+
+            // Get paginated doctor list
+            var doctors = await _doctorManager.GetTotalDoctors(offset, pageSize, search, sortColumn, sortOrder);
+
             if (doctors == null || !doctors.Any())
             {
-                return NotFound("There are no doctors");
+                return NotFound("There are no doctors.");
             }
 
-            return Ok(doctors);
-
+            return Ok(new
+            {
+                currentPage = page,
+                pageSize = pageSize,
+                totalDoctors = doctors.Count,  // Optional: consider using a separate total count SP
+                doctors
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetDoctors");
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, "An error occurred while fetching doctor data.");
         }
     }
     
@@ -210,5 +224,20 @@ public class DoctorController : ApiControllerBase
         }
 
         return Ok(response);  // Return 200 with the response data
+    }
+    [HttpPut("{doctorId}")] 
+    
+    public async Task<bool> ToggleDoctorStatus(int doctorId)
+    {
+        var doctor = await _context.DoctorDetails.FindAsync(doctorId);
+        if (doctor == null) return false;
+
+        doctor.IsActive = !doctor.IsActive;  // Toggle status
+        doctor.UpdatedAt = DateTime.UtcNow;
+
+        _context.DoctorDetails.Update(doctor);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 }

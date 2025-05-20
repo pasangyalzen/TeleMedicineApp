@@ -9,6 +9,42 @@
       "PackagePath": "staticwebassets/uploads/6f34bf68-7b62-4f8e-9f76-4f79d4093f36_1000015724.jpg"
     },
     {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/2d484e04-cdd4-41db-9a67-7313dc0cfd0b.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/2d484e04-cdd4-41db-9a67-7313dc0cfd0b.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/489d2fa4-4c88-4bee-b410-7696462027ba.png",
+      "PackagePath": "staticwebassets/uploads/doctors/489d2fa4-4c88-4bee-b410-7696462027ba.png"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/4932d28c-3715-4ac3-9646-53bd89ece1f5.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/4932d28c-3715-4ac3-9646-53bd89ece1f5.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/532ee82a-9f70-4305-ab48-933193e3e656.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/532ee82a-9f70-4305-ab48-933193e3e656.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/beb19f1f-90c5-4e49-a843-717ff0aad7e5.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/beb19f1f-90c5-4e49-a843-717ff0aad7e5.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/c063eb86-63ad-440b-9e15-5889bd562c6d.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/c063eb86-63ad-440b-9e15-5889bd562c6d.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/c34d9cff-8f7a-4b6e-b07c-ea0c82366196.png",
+      "PackagePath": "staticwebassets/uploads/doctors/c34d9cff-8f7a-4b6e-b07c-ea0c82366196.png"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/dfb8f913-88de-4e32-bd82-8dbb6b9cbbe9.jpg",
+      "PackagePath": "staticwebassets/uploads/doctors/dfb8f913-88de-4e32-bd82-8dbb6b9cbbe9.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/e55bacf3-93d4-42eb-9abc-d2105ca753ff.png",
+      "PackagePath": "staticwebassets/uploads/doctors/e55bacf3-93d4-42eb-9abc-d2105ca753ff.png"
+    },
+    {
       "Id": "obj/Debug/net8.0/staticwebassets/msbuild.TeleMedicineApp.Microsoft.AspNetCore.StaticWebAssets.props",
       "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
     },

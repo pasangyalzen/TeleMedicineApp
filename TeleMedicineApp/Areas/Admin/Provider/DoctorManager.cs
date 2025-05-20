@@ -167,6 +167,7 @@ namespace TeleMedicineApp.Areas.Admin.Provider
         {
             new KeyValue("@DoctorId", doctorId),
             new KeyValue("@FullName", string.IsNullOrEmpty(model.FullName) ? (object)DBNull.Value : model.FullName),
+            new KeyValue("@Email", string.IsNullOrEmpty(model.Email) ? (object)DBNull.Value : model.Email),
             new KeyValue("@PhoneNumber", string.IsNullOrEmpty(model.PhoneNumber) ? (object)DBNull.Value : model.PhoneNumber),
             new KeyValue("@Gender", string.IsNullOrEmpty(model.Gender) ? (object)DBNull.Value : model.Gender),
             new KeyValue("@DateOfBirth", model.DateOfBirth ?? (object)DBNull.Value),

@@ -161,3 +161,4 @@
 /Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/bin/Debug/net8.0/runtimes/win/lib/net8.0/System.Security.Cryptography.Pkcs.dll
 /Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/bin/Debug/net8.0/SQLHelper.dll
 /Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/bin/Debug/net8.0/SQLHelper.pdb
+/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/bin/Debug/net8.0/Newtonsoft.Json.dll

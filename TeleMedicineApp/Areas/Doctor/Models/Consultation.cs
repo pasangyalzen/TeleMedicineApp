@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using TeleChaukiDB.Models;
 
 public class Consultation
@@ -9,5 +10,6 @@ public class Consultation
     public DateTime CreatedAt { get; set; }
 
     public Appointment Appointment { get; set; }
+    [JsonIgnore]
     public ICollection<Prescription> Prescriptions { get; set; }
 }

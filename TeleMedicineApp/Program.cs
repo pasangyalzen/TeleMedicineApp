@@ -98,6 +98,9 @@ builder.Services.AddScoped<AppointmentManager>();  // Add this line
 builder.Services.AddScoped<PatientManager>();
 builder.Services.AddScoped<PharmacistManager>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddHttpClient<IPaymentService, PaymentService>();
+
 //builder.Services.AddScoped<AppointmentManager>();
 
 builder.Services.AddScoped<EmailService>();
@@ -211,11 +214,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
-
+app.UseStaticFiles();
 app.UseAuthentication();
 
 app.UseAuthorization();
-app.UseStaticFiles();
+
 
 app.MapControllers();
 

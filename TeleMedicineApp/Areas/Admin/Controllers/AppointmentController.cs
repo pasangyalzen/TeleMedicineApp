@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TeleMedicineApp.Areas.Admin.Models;
 using TeleMedicineApp.Areas.Admin.Provider;
 using TeleMedicineApp.Areas.Admin.ViewModels;
@@ -99,18 +100,25 @@ public class AppointmentController : ApiControllerBase
     /// <summary>
     /// Deletes an appointment by ID.
     /// </summary>
+    ///
     [HttpDelete("{id}")]
     [AllowAnonymous]
-    public async Task<IActionResult> DeleteAppointment(int id)
+    public async Task<object> DeleteAppointment(int appointmentId)
     {
-        var result = await _appointmentManager.DeleteAppointment(id);
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
 
-        if (result is string && (result.Contains("Cannot delete") || result.Contains("not found")))
-        {
-            return ApiError(result); // Return the error message from the stored procedure
-        }
+        if (appointment == null)
+            return "Appointment not found";
 
-        return ApiResponse(result); // Success message from the stored procedure
+        // Check if consultations exist
+        bool hasConsultations = await _context.Consultations.AnyAsync(c => c.AppointmentId == appointmentId);
+        if (hasConsultations)
+            return "Cannot delete: has consultations";
+
+        _context.Appointments.Remove(appointment);
+        await _context.SaveChangesAsync();
+
+        return "Appointment deleted successfully";
     }
     //
     [HttpPut("{appointmentId}")]

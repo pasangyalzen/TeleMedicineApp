@@ -22,5 +22,6 @@ public class DoctorDetails
     public decimal ConsultationFee { get; set; }
     public string ProfileImage { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsActive { get; set; } = true; 
     public DateTime UpdatedAt { get; set; }
 }
