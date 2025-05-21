@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using TeleChaukiDB.Models;
+using TeleMedicineApp.Models;
 using TeleMedicineApp.Areas.Doctor.Models;
 using TeleMedicineApp.Areas.Patient.Models;
 using TeleMedicineApp.Areas.Pharmacist.Models;

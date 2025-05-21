@@ -1,4 +1,4 @@
-using TeleChaukiDB.Models;
+using TeleMedicineApp.Models;
 
 public class ConsultationCreateDTO
 {

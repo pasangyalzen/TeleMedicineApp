@@ -15,7 +15,7 @@ using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Patients.Controllers;
 
-[Authorize(Roles = "SuperAdmin,Patient")] // Default authorization for all actions
+[Authorize(Roles = "SuperAdmin,Patient,Doctor")] // Default authorization for all actions
 [Area("Patient")]
 [Route("api/[area]/[action]")]
 [ApiController]
@@ -153,7 +153,7 @@ public async Task<IActionResult> RegisterPatient([FromForm] RegisterPatientDTO d
     }
         // Get a specific patient by ID
         [HttpGet("{patientId}")]
-        public async Task<PatientUpdateViewModel> GetPatientById(int patientId)
+        public async Task<PatientDetailsViewModel> GetPatientById(int patientId)
         {
             // Assuming you're using Entity Framework to fetch data
             var patient = await _context.PatientDetails
@@ -167,7 +167,7 @@ public async Task<IActionResult> RegisterPatient([FromForm] RegisterPatientDTO d
             }
 
             // Mapping to ViewModel
-            return new PatientUpdateViewModel
+            return new PatientDetailsViewModel
             {
                 PatientId = patient.PatientId,
                 FullName = patient.FullName,

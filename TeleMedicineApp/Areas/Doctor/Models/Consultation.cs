@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using TeleChaukiDB.Models;
+using TeleMedicineApp.Areas.Admin.Models;
 
 public class Consultation
 {
