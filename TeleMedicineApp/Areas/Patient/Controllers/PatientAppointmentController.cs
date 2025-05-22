@@ -8,7 +8,7 @@ using TeleMedicineApp.Data;
 
 namespace TeleMedicineApp.Areas.Patients.Controllers;
 
-[Authorize(Roles = "Patient")] // Default authorization for all actions
+[Authorize(Roles = "Patient,Doctor")] // Default authorization for all actions
 [Area("Patient")]
 [Route("api/[area]/[action]")]
 [ApiController]
@@ -241,6 +241,7 @@ public class PatientAppointmentController : ApiControllerBase
         }
     }
     [HttpGet("{appointmentId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetConsultationIdByAppointmentId(int appointmentId)
     {
         try

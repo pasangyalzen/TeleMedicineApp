@@ -84,73 +84,85 @@ public class DoctorAppointmentController : ApiControllerBase
     }
 
     [HttpPut("{appointmentId}")]
-    public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromBody] RescheduleAppointmentRequest request)
+public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromBody] RescheduleAppointmentRequest request)
+{
+    if (appointmentId != request.AppointmentId)
     {
-        if (appointmentId != request.AppointmentId)
-        {
-            return BadRequest("Appointment ID mismatch.");
-        }
-
-        // Fetch the appointment to be rescheduled
-        var appointment = await _context.Appointments.FindAsync(appointmentId);
-        if (appointment == null)
-        {
-            return NotFound("Appointment not found.");
-        }
-
-        // Get the day of week from the new appointment date (0 = Sunday, 6 = Saturday)
-        int dayOfWeek = (int)request.AppointmentDate.DayOfWeek;
-
-        // Get doctor's availability for that day
-        var doctorAvailability = await _context.DoctorAvailability
-            .Where(da => da.DoctorId == appointment.DoctorId && da.DayOfWeek == dayOfWeek)
-            .FirstOrDefaultAsync();
-
-        if (doctorAvailability == null)
-        {
-            return BadRequest("Doctor availability not found for the appointment day.");
-        }
-
-        int bufferMinutes = doctorAvailability.BufferTimeInMinutes;
-
-        // Check if the new appointment fits inside doctor's available hours
-        if (request.StartTime < doctorAvailability.StartTime || request.EndTime > doctorAvailability.EndTime)
-        {
-            return BadRequest("Appointment time is outside the doctor's available hours.");
-        }
-
-        // Calculate buffered start and end time for the new appointment
-        TimeSpan bufferedStart = request.StartTime - TimeSpan.FromMinutes(bufferMinutes);
-        TimeSpan bufferedEnd = request.EndTime + TimeSpan.FromMinutes(bufferMinutes);
-
-        // Check for overlapping appointments on the same day, excluding the current appointment
-        bool isOverlapping = await _context.Appointments
-            .AnyAsync(a =>
-                a.DoctorId == appointment.DoctorId &&
-                a.AppointmentDate == request.AppointmentDate &&
-                a.AppointmentId != appointmentId && // exclude the current appointment
-                (
-                    (bufferedStart < a.EndTime && bufferedStart >= a.StartTime) ||
-                    (bufferedEnd > a.StartTime && bufferedEnd <= a.EndTime) ||
-                    (a.StartTime >= bufferedStart && a.StartTime < bufferedEnd)
-                )
-            );
-
-        if (isOverlapping)
-        {
-            return BadRequest("This appointment overlaps with an existing one");
-        }
-
-        // Update appointment fields
-        appointment.AppointmentDate = request.AppointmentDate;
-        appointment.StartTime = request.StartTime;
-        appointment.EndTime = request.EndTime;
-        appointment.Status = request.Status ?? "Rescheduled";
-
-        await _context.SaveChangesAsync();
-
-        return Ok("Appointment rescheduled successfully.");
+        return BadRequest("Appointment ID mismatch.");
     }
+
+    // Fetch the appointment
+    var appointment = await _context.Appointments.FindAsync(appointmentId);
+    if (appointment == null)
+    {
+        return NotFound("Appointment not found.");
+    }
+
+    int dayOfWeek = (int)request.AppointmentDate.DayOfWeek;
+
+    // Get all availability slots for the doctor on that day
+    var availabilitySlots = await _context.DoctorAvailability
+        .Where(da => da.DoctorId == appointment.DoctorId && da.DayOfWeek == dayOfWeek)
+        .ToListAsync();
+
+    if (!availabilitySlots.Any())
+    {
+        return BadRequest("Doctor availability not found for the selected appointment day.");
+    }
+
+    // Normalize and log times
+    TimeSpan requestedStart = TimeSpan.FromMinutes(Math.Floor(request.StartTime.TotalMinutes));
+    TimeSpan requestedEnd = TimeSpan.FromMinutes(Math.Ceiling(request.EndTime.TotalMinutes));
+
+    Console.WriteLine($"Requested Time: {requestedStart} - {requestedEnd}");
+
+    foreach (var slot in availabilitySlots)
+    {
+        Console.WriteLine($"Available Slot: {slot.StartTime} - {slot.EndTime}");
+    }
+
+    // Check if requested time falls within any available slot
+    var validSlot = availabilitySlots.FirstOrDefault(slot =>
+        requestedStart >= slot.StartTime && requestedEnd <= slot.EndTime);
+
+    if (validSlot == null)
+    {
+        return BadRequest("Appointment time is outside all available time slots.");
+    }
+
+    // Apply buffer time
+    int bufferMinutes = validSlot.BufferTimeInMinutes;
+    TimeSpan bufferedStart = requestedStart - TimeSpan.FromMinutes(bufferMinutes);
+    TimeSpan bufferedEnd = requestedEnd + TimeSpan.FromMinutes(bufferMinutes);
+
+    // Check for overlapping appointments
+    bool isOverlapping = await _context.Appointments.AnyAsync(a =>
+        a.DoctorId == appointment.DoctorId &&
+        a.AppointmentDate == request.AppointmentDate &&
+        a.AppointmentId != appointmentId &&
+        (
+            (bufferedStart < a.EndTime && bufferedStart >= a.StartTime) ||
+            (bufferedEnd > a.StartTime && bufferedEnd <= a.EndTime) ||
+            (a.StartTime >= bufferedStart && a.StartTime < bufferedEnd)
+        )
+    );
+
+    if (isOverlapping)
+    {
+        return BadRequest("This appointment overlaps with an existing one.");
+    }
+
+    // Update appointment
+    appointment.AppointmentDate = request.AppointmentDate;
+    appointment.StartTime = requestedStart;
+    appointment.EndTime = requestedEnd;
+    appointment.Status = request.Status ?? "Rescheduled";
+    appointment.UpdatedAt = DateTime.UtcNow;
+
+    await _context.SaveChangesAsync();
+
+    return Ok("Appointment rescheduled successfully.");
+}
 
     [HttpPut("{appointmentId}")]
     public async Task<IActionResult> CancelAppointment(int appointmentId)
@@ -173,9 +185,11 @@ public class DoctorAppointmentController : ApiControllerBase
     [HttpGet("{doctorId}")]
     public async Task<IActionResult> GetPastAppointments(int doctorId)
     {
+        var today = DateTime.Today; // Local date (00:00:00 time)
+
         var appointments = await _context.Appointments
             .Where(a => a.DoctorId == doctorId &&
-                        a.AppointmentDate <= DateTime.UtcNow &&
+                        a.AppointmentDate < today && // Only appointments strictly before today
                         a.Status == "Completed")
             .ToListAsync();
 
@@ -241,7 +255,9 @@ public class DoctorAppointmentController : ApiControllerBase
                     DoctorId = doctor.DoctorId,
                     PatientId = joined.patient.PatientId,
                     PatientName = joined.patient.FullName,
-                    DoctorName = doctor.FullName
+                    DoctorName = doctor.FullName,
+                    joined.appointment.StartTime,    // Added StartTime
+                    joined.appointment.EndTime       // Added EndTime
                 })
             .ToListAsync();
 
@@ -250,7 +266,6 @@ public class DoctorAppointmentController : ApiControllerBase
 
         return Ok(upcomingAppointments);
     }
-
     [HttpPut("{appointmentId}")]
     public async Task<IActionResult> UpdateAppointmentStatus(int appointmentId, [FromBody] string newStatus)
     {
@@ -355,6 +370,57 @@ public class DoctorAppointmentController : ApiControllerBase
         }
 
         return Ok(doctorId);
+    }
+    
+    [HttpGet("{appointmentId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetConsultationIdByAppointmentId(int appointmentId)
+    {
+        try
+        {
+            var consultation = await _context.Consultations
+                .FirstOrDefaultAsync(c => c.AppointmentId == appointmentId);
+
+            if (consultation == null)
+            {
+                return NotFound(new { message = "Consultation not found for the given Appointment ID" });
+            }
+
+            return Ok(new { consultationId = consultation.ConsultationId });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Error retrieving consultation ID", details = ex.Message });
+        }
+    }
+    [HttpGet("{consultationId}")]
+    public async Task<IActionResult> GetConsultationById(int consultationId)
+    {
+        try
+        {
+            var consultation = await _context.Consultations
+                .Where(c => c.ConsultationId == consultationId)
+                .Select(c => new
+                {
+                    c.ConsultationId,
+                    c.AppointmentId,
+                    c.Notes,
+                    c.Recommendations,
+                    c.CreatedAt
+                })
+                .FirstOrDefaultAsync();
+
+            if (consultation == null)
+            {
+                return NotFound("Consultation not found.");
+            }
+
+            return Ok(consultation);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while fetching the consultation: {ex.Message}");
+        }
     }
 
     [HttpPost]
@@ -476,70 +542,70 @@ public class DoctorAppointmentController : ApiControllerBase
         return Ok(new { message = "Prescription created successfully" });
     }
     [HttpPost]
-public async Task<IActionResult> SetAvailability(DoctorAvailabilityDto availabilityDto)
-{
-    if (!ModelState.IsValid)
-        return BadRequest(ModelState);
-
-    var newStart = availabilityDto.StartTime;  // TimeSpan
-    var newEnd = availabilityDto.EndTime;      // TimeSpan
-
-    var buffer = TimeSpan.FromMinutes(availabilityDto.BufferTimeInMinutes);
-
-    // Get all existing availability for the doctor on the same day
-    var existingAvailabilities = await _context.DoctorAvailability
-        .Where(d => d.DoctorId == availabilityDto.DoctorId && d.DayOfWeek == availabilityDto.DayOfWeek)
-        .ToListAsync();
-
-    foreach (var existing in existingAvailabilities)
+    public async Task<IActionResult> SetAvailability(DoctorAvailabilityDto availabilityDto)
     {
-        // Skip overlap check against itself when updating
-        if (availabilityDto.AvailabilityId != 0 && availabilityDto.AvailabilityId == existing.AvailabilityId)
-            continue;
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        var existingStartWithBuffer = existing.StartTime - TimeSpan.FromMinutes(existing.BufferTimeInMinutes);
-        var existingEndWithBuffer = existing.EndTime + TimeSpan.FromMinutes(existing.BufferTimeInMinutes);
+        var newStart = availabilityDto.StartTime;  // TimeSpan
+        var newEnd = availabilityDto.EndTime;      // TimeSpan
 
-        bool overlaps = newStart < existingEndWithBuffer && newEnd > existingStartWithBuffer;
+        var buffer = TimeSpan.FromMinutes(availabilityDto.BufferTimeInMinutes);
 
-        if (overlaps)
-            return BadRequest("Doctor already has availability set that overlaps with this time slot including buffer time.");
-    }
+        // Get all existing availability for the doctor on the same day
+        var existingAvailabilities = await _context.DoctorAvailability
+            .Where(d => d.DoctorId == availabilityDto.DoctorId && d.DayOfWeek == availabilityDto.DayOfWeek)
+            .ToListAsync();
 
-    if (availabilityDto.AvailabilityId != 0)
-    {
-        // Update existing availability
-        var existingAvailability = existingAvailabilities.FirstOrDefault(d => d.AvailabilityId == availabilityDto.AvailabilityId);
-        if (existingAvailability == null)
-            return NotFound("Availability record not found.");
-
-        existingAvailability.StartTime = newStart;
-        existingAvailability.EndTime = newEnd;
-        existingAvailability.AppointmentDurationInMinutes = availabilityDto.AppointmentDurationInMinutes;
-        existingAvailability.BufferTimeInMinutes = availabilityDto.BufferTimeInMinutes;
-        existingAvailability.UpdatedAt = DateTime.Now;
-    }
-    else
-    {
-        // Add new availability
-        var newAvailability = new DoctorAvailability
+        foreach (var existing in existingAvailabilities)
         {
-            DoctorId = availabilityDto.DoctorId,
-            DayOfWeek = availabilityDto.DayOfWeek,
-            StartTime = newStart,
-            EndTime = newEnd,
-            AppointmentDurationInMinutes = availabilityDto.AppointmentDurationInMinutes,
-            BufferTimeInMinutes = availabilityDto.BufferTimeInMinutes,
-            CreatedAt = DateTime.Now
-        };
+            // Skip overlap check against itself when updating
+            if (availabilityDto.AvailabilityId != 0 && availabilityDto.AvailabilityId == existing.AvailabilityId)
+                continue;
 
-        _context.DoctorAvailability.Add(newAvailability);
+            var existingStartWithBuffer = existing.StartTime - TimeSpan.FromMinutes(existing.BufferTimeInMinutes);
+            var existingEndWithBuffer = existing.EndTime + TimeSpan.FromMinutes(existing.BufferTimeInMinutes);
+
+            bool overlaps = newStart < existingEndWithBuffer && newEnd > existingStartWithBuffer;
+
+            if (overlaps)
+                return BadRequest("Doctor already has availability set that overlaps with this time slot including buffer time.");
+        }
+
+        if (availabilityDto.AvailabilityId != 0)
+        {
+            // Update existing availability
+            var existingAvailability = existingAvailabilities.FirstOrDefault(d => d.AvailabilityId == availabilityDto.AvailabilityId);
+            if (existingAvailability == null)
+                return NotFound("Availability record not found.");
+
+            existingAvailability.StartTime = newStart;
+            existingAvailability.EndTime = newEnd;
+            existingAvailability.AppointmentDurationInMinutes = availabilityDto.AppointmentDurationInMinutes;
+            existingAvailability.BufferTimeInMinutes = availabilityDto.BufferTimeInMinutes;
+            existingAvailability.UpdatedAt = DateTime.Now;
+        }
+        else
+        {
+            // Add new availability
+            var newAvailability = new DoctorAvailability
+            {
+                DoctorId = availabilityDto.DoctorId,
+                DayOfWeek = availabilityDto.DayOfWeek,
+                StartTime = newStart,
+                EndTime = newEnd,
+                AppointmentDurationInMinutes = availabilityDto.AppointmentDurationInMinutes,
+                BufferTimeInMinutes = availabilityDto.BufferTimeInMinutes,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.DoctorAvailability.Add(newAvailability);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok("Availability saved successfully.");
     }
-
-    await _context.SaveChangesAsync();
-
-    return Ok("Availability saved successfully.");
-}
     
     [HttpDelete("{availabilityId}")]
     public async Task<IActionResult> DeleteAvailability(int availabilityId)
@@ -573,6 +639,58 @@ public async Task<IActionResult> SetAvailability(DoctorAvailabilityDto availabil
         // For example, returning the raw data is fine:
         return Ok(availabilities);
     }
+    [HttpGet("{availabilityId}")]
+    public async Task<IActionResult> GetAvailabilityByAvailabilityId(int availabilityId)
+    {
+        // Fetch the availability record with the given ID
+        var availability = await _context.DoctorAvailability
+            .FirstOrDefaultAsync(d => d.AvailabilityId == availabilityId);
+
+        if (availability == null)
+            return NotFound("No availability found for the specified ID.");
+
+        return Ok(availability);
+    }
+    
+    [HttpPut("{availabilityId}")]
+    public async Task<IActionResult> UpdateAvailability(int availabilityId, [FromBody] DoctorAvailability updated)
+    {
+        var existing = await _context.DoctorAvailability.FindAsync(availabilityId);
+        if (existing == null) return NotFound("Availability not found.");
+
+        // Overlap + buffer time check
+        var newStart = updated.StartTime;
+        var newEnd = updated.EndTime;
+        var buffer = TimeSpan.FromMinutes(updated.BufferTimeInMinutes);
+
+        var existingAvailabilities = await _context.DoctorAvailability
+            .Where(d => d.DoctorId == existing.DoctorId && d.DayOfWeek == updated.DayOfWeek && d.AvailabilityId != availabilityId)
+            .ToListAsync();
+
+        foreach (var other in existingAvailabilities)
+        {
+            var otherStartWithBuffer = other.StartTime - TimeSpan.FromMinutes(other.BufferTimeInMinutes);
+            var otherEndWithBuffer = other.EndTime + TimeSpan.FromMinutes(other.BufferTimeInMinutes);
+
+            bool overlaps = newStart < otherEndWithBuffer && newEnd > otherStartWithBuffer;
+            if (overlaps)
+            {
+                return BadRequest("The updated availability overlaps with an existing one, including buffer time.");
+            }
+        }
+
+        // Proceed with update
+        existing.DayOfWeek = updated.DayOfWeek;
+        existing.StartTime = updated.StartTime;
+        existing.EndTime = updated.EndTime;
+        existing.AppointmentDurationInMinutes = updated.AppointmentDurationInMinutes;
+        existing.BufferTimeInMinutes = updated.BufferTimeInMinutes;
+        existing.UpdatedAt = DateTime.Now;
+
+        await _context.SaveChangesAsync();
+        return Ok(existing);
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetDoctorsBySpecialization(string specialization)
     {
