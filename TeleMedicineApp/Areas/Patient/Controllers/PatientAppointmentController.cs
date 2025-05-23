@@ -47,7 +47,7 @@ public class PatientAppointmentController : ApiControllerBase
         var upcomingAppointments = await _context.Appointments
             .Where(a => a.PatientId == patientId &&
                         a.AppointmentDate > today &&
-                        a.Status != "Cancelled")
+                        a.Status != "Cancelled" && a.Status != "Completed")
             .OrderBy(a => a.AppointmentDate)
             .Join(_context.DoctorDetails,
                 appointment => appointment.DoctorId,
@@ -141,7 +141,7 @@ public class PatientAppointmentController : ApiControllerBase
         var appointments = await _context.Appointments
             .Where(a => a.PatientId == patientId &&
                         a.AppointmentDate == today &&
-                        a.Status != "Cancelled")
+                        a.Status != "Cancelled" && a.Status != "Completed")
             .OrderBy(a => a.AppointmentDate)
             .Join(_context.DoctorDetails,
                 appointment => appointment.DoctorId,
@@ -178,7 +178,7 @@ public class PatientAppointmentController : ApiControllerBase
         var upcomingAppointments = await _context.Appointments
             .Where(a => a.PatientId == patientId &&
                         a.AppointmentDate > today &&
-                        a.Status != "Cancelled")
+                        a.Status != "Cancelled" && a.Status != "Completed") 
             .OrderBy(a => a.AppointmentDate)
             .Join(_context.DoctorDetails,
                 appointment => appointment.DoctorId,
@@ -226,6 +226,8 @@ public class PatientAppointmentController : ApiControllerBase
             return BadRequest(new { message = "Error retrieving patient ID", details = ex.Message });
         }
     }
+    
+    
     [HttpGet("{patientId}")]
     public async Task<IActionResult> GetPrescriptionsByPatientId(int patientId)
     {
@@ -235,6 +237,7 @@ public class PatientAppointmentController : ApiControllerBase
                 .Include(p => p.PrescriptionItems)
                 .Include(p => p.Consultation)
                 .ThenInclude(c => c.Appointment)
+                .ThenInclude(a => a.Doctor) // Assuming you have this navigation
                 .Where(p => p.Consultation.Appointment.PatientId == patientId)
                 .Select(p => new
                 {
@@ -242,6 +245,11 @@ public class PatientAppointmentController : ApiControllerBase
                     p.ConsultationId,
                     p.PrescribedAt,
                     AppointmentId = p.Consultation.AppointmentId,
+                    AppointmentDate = p.Consultation.Appointment.AppointmentDate,
+                    StartTime = p.Consultation.Appointment.StartTime,
+                    EndTime = p.Consultation.Appointment.EndTime,
+                    DoctorId = p.Consultation.Appointment.DoctorId,
+                    DoctorName = p.Consultation.Appointment.Doctor.FullName, // Make sure Doctor has this
                     PrescriptionItems = p.PrescriptionItems.Select(item => new
                     {
                         item.MedicineName,

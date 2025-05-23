@@ -11,7 +11,7 @@ using TeleMedicineApp.Data;
 using TeleMedicineApp.Services;
 
 namespace TeleMedicineApp.Areas.Admin.Controllers;
-
+[Authorize(Roles = "SuperAdmin,Doctor,Patient")]
 [ApiController]
 [Route("api/admin/appointments/[action]")]
 public class AppointmentController : ApiControllerBase
@@ -180,5 +180,16 @@ public class AppointmentController : ApiControllerBase
             _logger.LogError(ex, "Error occurred while creating the appointment");
             return StatusCode(500, new { message = "An error occurred while creating the appointment" });
         }
+    }
+    [HttpPut("{appointmentId}")]
+    public async Task<IActionResult> MarkAppointmentCompleted(int appointmentId)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+        if (appointment == null) return NotFound();
+
+        appointment.Status = "Completed";
+        await _context.SaveChangesAsync();
+
+        return Ok(appointment);
     }
 }
