@@ -39,62 +39,80 @@ public class PatientAppointmentController : ApiControllerBase
     }
     
     [HttpGet("{patientId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetUpcomingAppointments(int patientId)
     {
-        try
-        {
-            var upcomingAppointments = await _context.Appointments
-                .Where(a => a.PatientId == patientId && a.AppointmentDate >= DateTime.UtcNow)
-                .Join(_context.DoctorDetails,
-                    appointment => appointment.DoctorId,
-                    doctor => doctor.DoctorId,
-                    (appointment, doctor) => new
-                    {
-                        appointment.AppointmentId,
-                        appointment.AppointmentDate,
-                        appointment.Status,
-                        appointment.Reason,
-                        DoctorFullName = doctor.FullName
-                    })
-                .OrderBy(a => a.AppointmentDate)
-                .ToListAsync();
+        var today = DateTime.UtcNow.Date;
 
-            return Ok(upcomingAppointments);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = "Error retrieving upcoming appointments", details = ex.Message });
-        }
+        var upcomingAppointments = await _context.Appointments
+            .Where(a => a.PatientId == patientId &&
+                        a.AppointmentDate > today &&
+                        a.Status != "Cancelled")
+            .OrderBy(a => a.AppointmentDate)
+            .Join(_context.DoctorDetails,
+                appointment => appointment.DoctorId,
+                doctor => doctor.DoctorId,
+                (appointment, doctor) => new { appointment, doctor })
+            .Join(_context.PatientDetails,
+                result => result.appointment.PatientId,
+                patient => patient.PatientId,
+                (result, patient) => new
+                {
+                    result.appointment.AppointmentId,
+                    result.appointment.AppointmentDate,
+                    result.appointment.StartTime,
+                    result.appointment.EndTime,
+                    result.appointment.DoctorId,
+                    result.appointment.Status,
+                    PatientId = patient.PatientId,
+                    PatientName = patient.FullName,
+                    DoctorName = result.doctor.FullName
+                })
+            .ToListAsync();
+
+        if (!upcomingAppointments.Any())
+            return NotFound("No upcoming appointments found.");
+
+        return Ok(upcomingAppointments);
     }
     
-    [HttpGet("past/{patientId}")]
+    
+    [HttpGet("{patientId}")]
     public async Task<IActionResult> GetPastAppointments(int patientId)
     {
-        try
-        {
-            var pastAppointments = await _context.Appointments
-                .Where(a => a.PatientId == patientId && a.AppointmentDate < DateTime.UtcNow)
-                .Join(_context.DoctorDetails,
-                    appointment => appointment.DoctorId,
-                    doctor => doctor.DoctorId,
-                    (appointment, doctor) => new
-                    {
-                        appointment.AppointmentId,
-                        appointment.AppointmentDate,
-                        appointment.Status,
-                        DoctorFullName = doctor.FullName
-                    })
-                .OrderByDescending(a => a.AppointmentDate)
-                .ToListAsync();
+        var today = DateTime.UtcNow.Date;
 
-            return Ok(pastAppointments);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = "Error retrieving past appointments", details = ex.Message });
-        }
+        var pastAppointments = await _context.Appointments
+            .Where(a => a.PatientId == patientId &&
+                        a.AppointmentDate < today &&
+                        (a.Status == "Completed" || a.Status == "NoShow"))
+            .OrderByDescending(a => a.AppointmentDate)
+            .Join(_context.DoctorDetails,
+                appointment => appointment.DoctorId,
+                doctor => doctor.DoctorId,
+                (appointment, doctor) => new { appointment, doctor })
+            .Join(_context.PatientDetails,
+                result => result.appointment.PatientId,
+                patient => patient.PatientId,
+                (result, patient) => new
+                {
+                    result.appointment.AppointmentId,
+                    result.appointment.AppointmentDate,
+                    result.appointment.StartTime,
+                    result.appointment.EndTime,
+                    result.appointment.DoctorId,
+                    result.appointment.Status,
+                    PatientId = patient.PatientId,
+                    PatientName = patient.FullName,
+                    DoctorName = result.doctor.FullName
+                })
+            .ToListAsync();
+
+        if (!pastAppointments.Any())
+            return NotFound("No past appointments found.");
+
+        return Ok(pastAppointments);
     }
-    
     [HttpGet("{appointmentId}")]
     public async Task<IActionResult> GetConsultationByAppointmentId(int appointmentId)
     {
@@ -118,44 +136,11 @@ public class PatientAppointmentController : ApiControllerBase
     [HttpGet("{patientId}")]
     public async Task<IActionResult> GetTodaysAppointmentsByPatient(int patientId)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.Today;
 
         var appointments = await _context.Appointments
-            .Where(a => a.PatientId == patientId && a.AppointmentDate == today && a.Status != "Cancelled")
-            .OrderBy(a => a.AppointmentDate)
-            .Join(_context.DoctorDetails,
-                appointment => appointment.DoctorId,
-                doctor => doctor.DoctorId,
-                (appointment, doctor) => new { appointment, doctor })
-            .Join(_context.PatientDetails,
-                result => result.appointment.PatientId,
-                patient => patient.PatientId,
-                (result, patient) => new
-                {
-                    result.appointment.AppointmentId,
-                    result.appointment.AppointmentDate,
-                    result.appointment.DoctorId,
-                    result.appointment.Status,
-                    PatientId = patient.PatientId,
-                    PatientName = patient.FullName,
-                    DoctorName = result.doctor.FullName
-                })
-            .ToListAsync();
-
-        if (!appointments.Any())
-            return NotFound("No appointments for today.");
-
-        return Ok(appointments);
-    }
-    [AllowAnonymous]
-    [HttpGet("{patientId}")]
-    public async Task<IActionResult> GetUpcomingAppointmentsByPatient(int patientId)
-    {
-        var today = DateTime.UtcNow.Date;
-
-        var upcomingAppointments = await _context.Appointments
             .Where(a => a.PatientId == patientId &&
-                        a.AppointmentDate > today && 
+                        a.AppointmentDate == today &&
                         a.Status != "Cancelled")
             .OrderBy(a => a.AppointmentDate)
             .Join(_context.DoctorDetails,
@@ -169,6 +154,45 @@ public class PatientAppointmentController : ApiControllerBase
                 {
                     result.appointment.AppointmentId,
                     result.appointment.AppointmentDate,
+                    result.appointment.StartTime,
+                    result.appointment.EndTime,
+                    result.appointment.DoctorId,
+                    result.appointment.Status,
+                    PatientId = patient.PatientId,
+                    PatientName = patient.FullName,
+                    DoctorName = result.doctor.FullName
+                })
+            .ToListAsync();
+
+        if (!appointments.Any())
+            return NotFound("No appointments for today.");
+
+        return Ok(appointments);
+    }
+    [HttpGet("{patientId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUpcomingAppointmentsByPatient(int patientId)
+    {
+        var today = DateTime.UtcNow.Date;
+
+        var upcomingAppointments = await _context.Appointments
+            .Where(a => a.PatientId == patientId &&
+                        a.AppointmentDate > today &&
+                        a.Status != "Cancelled")
+            .OrderBy(a => a.AppointmentDate)
+            .Join(_context.DoctorDetails,
+                appointment => appointment.DoctorId,
+                doctor => doctor.DoctorId,
+                (appointment, doctor) => new { appointment, doctor })
+            .Join(_context.PatientDetails,
+                result => result.appointment.PatientId,
+                patient => patient.PatientId,
+                (result, patient) => new
+                {
+                    result.appointment.AppointmentId,
+                    result.appointment.AppointmentDate,
+                    result.appointment.StartTime,
+                    result.appointment.EndTime,
                     result.appointment.DoctorId,
                     result.appointment.Status,
                     PatientId = patient.PatientId,
