@@ -136,10 +136,13 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
     TimeSpan bufferedEnd = requestedEnd + TimeSpan.FromMinutes(bufferMinutes);
 
     // Check for overlapping appointments
+    // Check for overlapping appointments, excluding Cancelled and Completed ones
     bool isOverlapping = await _context.Appointments.AnyAsync(a =>
         a.DoctorId == appointment.DoctorId &&
         a.AppointmentDate == request.AppointmentDate &&
         a.AppointmentId != appointmentId &&
+        a.Status != "Cancelled" &&
+        a.Status != "Completed" && // ✅ Exclude completed appointments
         (
             (bufferedStart < a.EndTime && bufferedStart >= a.StartTime) ||
             (bufferedEnd > a.StartTime && bufferedEnd <= a.EndTime) ||
@@ -185,16 +188,12 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
     [HttpGet("{doctorId}")]
     public async Task<IActionResult> GetPastAppointments(int doctorId)
     {
-        var today = DateTime.Today; // Local date (00:00:00 time)
-
         var appointments = await _context.Appointments
-            .Where(a => a.DoctorId == doctorId &&
-                        a.AppointmentDate < today && // Only appointments strictly before today
-                        a.Status == "Completed")
+            .Where(a => a.DoctorId == doctorId && a.Status == "Completed")
             .ToListAsync();
 
         if (!appointments.Any())
-            return NotFound("No past appointments found for this doctor.");
+            return NotFound("No completed appointments found for this doctor.");
 
         var result = new List<object>();
 
@@ -214,6 +213,8 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
             {
                 a.AppointmentId,
                 a.AppointmentDate,
+                a.StartTime,        // Included StartTime
+                a.EndTime,          // Included EndTime
                 a.Status,
                 a.Reason,
                 a.CreatedAt,
@@ -624,6 +625,7 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
         return Ok("Availability deleted successfully.");
     }
     [HttpGet("{doctorId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAvailability(int doctorId)
     {
         // Fetch all availability records for this doctor
@@ -653,6 +655,7 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
     }
     
     [HttpPut("{availabilityId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> UpdateAvailability(int availabilityId, [FromBody] DoctorAvailability updated)
     {
         var existing = await _context.DoctorAvailability.FindAsync(availabilityId);
@@ -692,6 +695,7 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetDoctorsBySpecialization(string specialization)
     {
         if (string.IsNullOrWhiteSpace(specialization))
@@ -717,6 +721,7 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
     }
     
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetDoctorAvailabilityById(int doctorId)
     {
         if (doctorId <= 0)
@@ -742,6 +747,7 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
     }
     
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> SearchPatients(string query)
     {
         if (string.IsNullOrWhiteSpace(query))

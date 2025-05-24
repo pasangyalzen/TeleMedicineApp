@@ -84,8 +84,7 @@ public class PatientAppointmentController : ApiControllerBase
 
         var pastAppointments = await _context.Appointments
             .Where(a => a.PatientId == patientId &&
-                        a.AppointmentDate < today &&
-                        (a.Status == "Completed" || a.Status == "NoShow"))
+                        a.Status == "Completed")
             .OrderByDescending(a => a.AppointmentDate)
             .Join(_context.DoctorDetails,
                 appointment => appointment.DoctorId,

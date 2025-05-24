@@ -12,6 +12,7 @@ using TeleMedicineApp.Areas.Admin.Models;
 using TeleMedicineApp.Areas.Admin.Provider;
 using TeleMedicineApp.Areas.Admin.ViewModels;
 using TeleMedicineApp.Controllers;
+using TeleMedicineApp.Areas.Pharmacist.ViewModels;
 
 namespace TeleMedicineApp.Areas.Pharmacist.Controllers
 {
@@ -261,6 +262,177 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
             {
                 return StatusCode(500, new { message = "An error occurred while updating status.", error = ex.Message });
             }
+        }
+        
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCompletedAppointments()
+        {
+            var appointments = await _context.Appointments
+                .Where(a => a.Status == "Completed")
+                .Include(a => a.Doctor)
+                .Include(a => a.Patient)
+                .OrderByDescending(a => a.AppointmentDate)
+                .Select(a => new
+                {
+                    a.AppointmentId,
+                    a.DoctorId,
+                    DoctorName = a.Doctor.FullName,
+                    a.PatientId,
+                    PatientName = a.Patient.FullName,
+                    a.Status,
+                    a.CreatedAt,
+                    a.UpdatedAt,
+                    a.AddedBy,
+                    a.AppointmentDate,
+                    a.StartTime,
+                    a.EndTime,
+                    a.AppointmentDurationInMinutes,
+                    a.Reason
+                })
+                .ToListAsync();
+
+            return Ok(appointments);
+        }
+        
+        [HttpGet("{appointmentId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetConsultationPrescriptionsByAppointment(int appointmentId)
+        {
+            var consultation = await _context.Consultations
+                .Include(c => c.Prescriptions)
+                .ThenInclude(p => p.PrescriptionItems)
+                .Include(c => c.Appointment)
+                .ThenInclude(a => a.Doctor)
+                .Include(c => c.Appointment)
+                .ThenInclude(a => a.Patient)
+                .FirstOrDefaultAsync(c => c.AppointmentId == appointmentId);
+
+            if (consultation == null)
+                return NotFound("No consultation found for the given appointment.");
+
+            var allPrescriptionItems = consultation.Prescriptions?
+                .SelectMany(p => p.PrescriptionItems)
+                .Select(pi => new PrescriptionItemViewModel
+                {
+                    MedicineName = pi.MedicineName,
+                    Dosage = pi.Dosage,
+                    Frequency = pi.Frequency,
+                    Duration = pi.Duration,
+                    Notes = pi.Notes
+                }).ToList() ?? new List<PrescriptionItemViewModel>();
+
+            var result = new ConsultationPrescriptionViewModel
+            {
+                AppointmentId = consultation.AppointmentId,
+                DoctorName = consultation.Appointment.Doctor?.FullName ?? "N/A",
+                PatientName = consultation.Appointment.Patient?.FullName ?? "N/A",
+                Notes = consultation.Notes,
+                Recommendations = consultation.Recommendations,
+                PrescriptionItems = allPrescriptionItems
+            };
+
+            return Ok(result);
+        }
+        
+        
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllConsultations()
+        {
+            var consultations = await _context.Consultations
+                .Include(c => c.Appointment)
+                .ThenInclude(a => a.Doctor)
+                .Include(c => c.Appointment)
+                .ThenInclude(a => a.Patient)
+                .OrderByDescending(c => c.CreatedAt)
+                .Select(c => new
+                {
+                    c.ConsultationId,
+                    c.AppointmentId,
+                    DoctorName = c.Appointment.Doctor.FullName,
+                    PatientName = c.Appointment.Patient.FullName,
+                    c.Notes,
+                    c.Recommendations,
+                    c.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(consultations);
+        }
+        
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllPrescriptions()
+        {
+            var prescriptions = await _context.Prescriptions
+                .Include(p => p.PrescriptionItems)
+                .Include(p => p.Consultation)
+                .ThenInclude(c => c.Appointment)
+                .ThenInclude(a => a.Patient)
+                .Include(p => p.Consultation)
+                .ThenInclude(c => c.Appointment)
+                .ThenInclude(a => a.Doctor)
+                .Select(p => new
+                {
+                    p.PrescriptionId,
+                    p.ConsultationId,
+                    p.PrescribedAt,
+                    DoctorName = p.Consultation.Appointment.Doctor.FullName,
+                    PatientName = p.Consultation.Appointment.Patient.FullName,
+                    PrescriptionItems = p.PrescriptionItems.Select(pi => new
+                    {
+                        pi.MedicineName,
+                        pi.Dosage,
+                        pi.Frequency,
+                        pi.Duration,
+                        pi.Notes
+                    }).ToList()
+                })
+                .OrderByDescending(p => p.PrescribedAt)
+                .ToListAsync();
+
+            return Ok(prescriptions);
+        }
+        
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetRequestedPrescriptions()
+        {
+            var prescriptions = await _context.PatientDetails
+                .Where(p => p.hasRequested)
+                .Join(_context.Appointments.Where(a => a.Status == "Completed"),
+                    p => p.PatientId,
+                    a => a.PatientId,
+                    (p, a) => new { p, a })
+                .Join(_context.Consultations,
+                    pa => pa.a.AppointmentId,
+                    c => c.AppointmentId,
+                    (pa, c) => new { pa.p, Consultation = c })
+                .Join(_context.Prescriptions,
+                    pc => pc.Consultation.ConsultationId,
+                    pr => pr.ConsultationId,
+                    (pc, pr) => new { pc.p, pc.Consultation, Prescription = pr })
+                .SelectMany(
+                    pcp => _context.PrescriptionItems
+                        .Where(pi => pi.PrescriptionId == pcp.Prescription.PrescriptionId)
+                        .Select(pi => new
+                        {
+                            PatientId = pcp.p.PatientId,
+                            PatientName = pcp.p.FullName,
+                            PatientPhoto = pcp.p.ProfileImage,    // <-- Added here
+                            pcp.Prescription.PrescriptionId,
+                            pcp.Prescription.PrescribedAt,
+                            pi.MedicineName,
+                            pi.Dosage,
+                            pi.Frequency,
+                            pi.Duration,
+                            pi.Notes
+                        })
+                )
+                .ToListAsync();
+
+            return Ok(prescriptions);
         }
     }
 }

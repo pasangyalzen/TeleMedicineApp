@@ -53,7 +53,8 @@ namespace TeleMedicineApp.Areas.Patient.Models
         public string Allergies { get; set; }
         public string ChronicDiseases { get; set; }
         public string Medications { get; set; }
-
+        
+        public bool hasRequested { get; set; }
         public bool Status { get; set; } = true; // Active by default
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; }

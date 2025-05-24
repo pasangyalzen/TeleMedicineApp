@@ -162,7 +162,8 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
-
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>

@@ -29,6 +29,7 @@ namespace TeleMedicineApp.Data
         public DbSet<PrescriptionItem> PrescriptionItems { get; set; }
         public DbSet<DoctorAvailability> DoctorAvailability { get; set; }
         
+        public DbSet<MedicineInventory> MedicineInventory { get; set; }
         // Optional: You can add additional configurations for relationships or table names here if necessary.
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)

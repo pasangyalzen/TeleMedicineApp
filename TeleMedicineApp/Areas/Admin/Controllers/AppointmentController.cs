@@ -145,42 +145,67 @@ public class AppointmentController : ApiControllerBase
         }
     }
     
-    [AllowAnonymous]
-    [HttpPost]
-    public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
-    {
-        try
+    
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
         {
-            if (model == null)
-                return BadRequest("Invalid appointment details");
-
-            // Validate the model
-            if (!model.IsValid())
-                return BadRequest("Invalid appointment details");
-
-            // Normalize ScheduledTime to remove seconds and milliseconds
-            model.NormalizeAppointmentTime();
-
-            string username = User.Identity?.Name ?? "StaticUser";
-
-            // Call backend logic to create appointment
-            var result = await _appointmentManager.CreateAppointment(model, username);  
-
-            // Check if the result is successful and send the appropriate success message
-            if (result.IsSuccess)
+            try
             {
-                return Ok(new { message = result.ResultMessage ?? "Appointment created successfully." });
-            }
+                if (model == null)
+                {
+                    _logger.LogWarning("CreateAppointment called with null model");
+                    return BadRequest("Invalid appointment details: model is null");
+                }
 
-            // If the operation failed, return the error message
-            return BadRequest(new { message = result.ErrorMessage });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while creating the appointment");
-            return StatusCode(500, new { message = "An error occurred while creating the appointment" });
-        }
-    }
+                // Log the incoming model data for debugging
+                _logger.LogInformation("CreateAppointment called with data: {@Model}", model);
+
+                // Validate the model
+                if (!model.IsValid())
+                {
+                    _logger.LogWarning("CreateAppointment validation failed: {@Model}", model);
+                    return BadRequest("Invalid appointment details: failed validation");
+                }
+
+                // Normalize ScheduledTime to remove seconds and milliseconds
+                model.NormalizeAppointmentTime();
+
+                _logger.LogInformation("Normalized appointment times: AppointmentDate={AppointmentDate}, StartTime={StartTime}, EndTime={EndTime}",
+                    model.AppointmentDate, model.StartTime, model.EndTime);
+
+                string username = User.Identity?.Name ?? "StaticUser";
+                _logger.LogInformation("Appointment creation initiated by user: {Username}", username);
+
+                // Call backend logic to create appointment
+                var result = await _appointmentManager.CreateAppointment(model, username);
+
+                if (result == null)
+                {
+                    _logger.LogError("CreateAppointment returned null result for model: {@Model}", model);
+                    return StatusCode(500, "Internal server error while creating appointment");
+                }
+
+                // Check if the result is successful and send the appropriate success message
+                if (result.IsSuccess)
+                {
+                    _logger.LogInformation("Appointment created successfully: {Message}", result.ResultMessage);
+                    return Ok(new { message = result.ResultMessage ?? "Appointment created successfully." });
+                }
+                else
+                {
+                    // If the operation failed, return the error message and log it
+                    _logger.LogWarning("CreateAppointment failed: {ErrorMessage}", result.ErrorMessage);
+                    return BadRequest(new { message = result.ErrorMessage });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while creating appointment with data: {@Model}", model);
+                return StatusCode(500, new { message = "An error occurred while creating the appointment" });
+            }
+}    
+        
     [HttpPut("{appointmentId}")]
     public async Task<IActionResult> MarkAppointmentCompleted(int appointmentId)
     {
