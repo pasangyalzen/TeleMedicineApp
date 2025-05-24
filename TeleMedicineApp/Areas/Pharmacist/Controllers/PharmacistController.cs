@@ -108,6 +108,7 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllPharmacists(
             string search = "", 
             string sortColumn = "CreatedAt", 
@@ -433,6 +434,43 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
                 .ToListAsync();
 
             return Ok(prescriptions);
+        }
+        
+        
+        [HttpGet("{email}")]
+        public async Task<IActionResult> GetPharmacistByEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return BadRequest("Email is required.");
+
+            var pharmacist = await _context.PharmacistDetails
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.User.Email.ToLower() == email.ToLower());
+
+            if (pharmacist == null)
+                return NotFound("Pharmacist not found.");
+
+            // Return selected fields + email
+            return Ok(new
+            {
+                pharmacist.PharmacistId,
+                pharmacist.UserId,
+                email = pharmacist.User.Email,
+                pharmacist.FullName,
+                pharmacist.PhoneNumber,
+                pharmacist.Gender,
+                pharmacist.DateOfBirth,
+                pharmacist.PharmacyName,
+                pharmacist.LicenseNumber,
+                pharmacist.PharmacyAddress,
+                pharmacist.WorkingHours,
+                pharmacist.ServicesOffered,
+                pharmacist.ProfileImage,
+                pharmacist.CreatedAt,
+                pharmacist.UpdatedAt,
+                pharmacist.DoctorId,
+                pharmacist.PatientId
+            });
         }
     }
 }

@@ -244,6 +244,7 @@ TeleMedicine Team
     }
     
     [HttpGet("GetDashboardCounts")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetDashboardCounts()
     {
         // Get all user-role mappings with roles
