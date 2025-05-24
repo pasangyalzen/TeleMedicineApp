@@ -322,4 +322,49 @@ public class PatientAppointmentController : ApiControllerBase
             return StatusCode(500, $"An error occurred while fetching the consultation: {ex.Message}");
         }
     }
+    
+    [HttpPut("{appointmentId}")]
+    public async Task<IActionResult> ConfirmAppointment(int appointmentId)
+    {
+        var appointment = await _context.Appointments.FindAsync(appointmentId);
+
+        if (appointment == null)
+        {
+            return NotFound($"Appointment with ID {appointmentId} not found.");
+        }
+
+        appointment.Status = "Confirmed";
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Appointment has been Confirmed." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while updating the appointment status: {ex.Message}");
+        }
+    }
+    
+    [HttpGet("{doctorId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetConsultationFeeByDoctorId(int doctorId)
+    {
+        try
+        {
+            var doctor = await _context.DoctorDetails
+                .FirstOrDefaultAsync(d => d.DoctorId == doctorId);
+
+            if (doctor == null)
+            {
+                return NotFound(new { message = "Doctor not found with the provided ID." });
+            }
+
+            return Ok(new { consultationFee = doctor.ConsultationFee });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error retrieving consultation fee", details = ex.Message });
+        }
+    }
 }

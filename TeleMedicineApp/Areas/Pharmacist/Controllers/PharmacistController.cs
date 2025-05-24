@@ -43,63 +43,65 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> RegisterPharmacist([FromForm] RegisterPharmacistDTO dto)
+[AllowAnonymous]
+[Consumes("multipart/form-data")]
+    public async Task<IActionResult> RegisterPharmacist([FromForm] RegisterPharmacistDTO dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        _logger.LogInformation("📥 Registering new pharmacist: {FullName}, Phone: {PhoneNumber}", dto.FullName, dto.PhoneNumber);
+
+        // Handle profile image upload
+        string imagePath = null;
+        if (dto.ProfileImage != null && dto.ProfileImage.Length > 0)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var ext = Path.GetExtension(dto.ProfileImage.FileName).ToLower();
+            var allowed = new[] { ".jpg", ".jpeg", ".png" };
 
-            _logger.LogInformation("📥 Registering new pharmacist: {FullName}, Phone: {PhoneNumber}", dto.FullName, dto.PhoneNumber);
+            if (!allowed.Contains(ext))
+                return BadRequest("Only jpg, jpeg, and png formats are allowed.");
 
-            string imagePath = null;
-            if (dto.ProfileImage != null && dto.ProfileImage.Length > 0)
-            {
-                var ext = Path.GetExtension(dto.ProfileImage.FileName).ToLower();
-                var allowed = new[] { ".jpg", ".jpeg", ".png" };
+            if (dto.ProfileImage.Length > 2 * 1024 * 1024)
+                return BadRequest("Max image size is 2MB.");
 
-                if (!allowed.Contains(ext))
-                    return BadRequest("Only jpg, jpeg, and png formats are allowed.");
+            var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "pharmacists");
+            Directory.CreateDirectory(uploadDir);
 
-                if (dto.ProfileImage.Length > 2 * 1024 * 1024)
-                    return BadRequest("Max image size is 2MB.");
+            var fileName = Guid.NewGuid().ToString() + ext;
+            var filePath = Path.Combine(uploadDir, fileName);
 
-                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "pharmacists");
-                Directory.CreateDirectory(uploadDir);
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await dto.ProfileImage.CopyToAsync(stream);
 
-                var fileName = Guid.NewGuid().ToString() + ext;
-                var filePath = Path.Combine(uploadDir, fileName);
-
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await dto.ProfileImage.CopyToAsync(stream);
-
-                imagePath = "/uploads/pharmacists/" + fileName;
-            }
-
-            var pharmacistDetails = new PharmacistDetails
-            {
-                UserId = dto.UserId,
-                FullName = dto.FullName,
-                PhoneNumber = dto.PhoneNumber,
-                Gender = dto.Gender,
-                DateOfBirth = dto.DateOfBirth,
-                PharmacyName = dto.PharmacyName,
-                LicenseNumber = dto.LicenseNumber,
-                PharmacyAddress = dto.PharmacyAddress,
-                WorkingHours = dto.WorkingHours,
-                ServicesOffered = dto.ServicesOffered,
-                ProfileImage = imagePath,
-                // DoctorId = dto.DoctorId,
-                // PatientId = dto.PatientId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            _context.PharmacistDetails.Add(pharmacistDetails);
-            await _context.SaveChangesAsync();
-
-            return Ok("Pharmacist registered successfully.");
+            imagePath = "/uploads/pharmacists/" + fileName;
         }
+
+        // Create and store pharmacist record
+        var pharmacist = new PharmacistDetails
+        {
+            UserId = dto.UserId,
+            FullName = dto.FullName,
+            PhoneNumber = dto.PhoneNumber,
+            Gender = dto.Gender,
+            DateOfBirth = dto.DateOfBirth,
+            PharmacyName = dto.PharmacyName,
+            LicenseNumber = dto.LicenseNumber,
+            PharmacyAddress = dto.PharmacyAddress,
+            WorkingHours = dto.WorkingHours,
+            ServicesOffered = dto.ServicesOffered,
+            ProfileImage = imagePath,
+            CreatedAt = DateTime.UtcNow,
+            DoctorId = dto.DoctorId,
+            PatientId = dto.PatientId,
+            Status = true // Set default status as active (or handle as needed)
+        };
+
+        _context.PharmacistDetails.Add(pharmacist);
+        await _context.SaveChangesAsync();
+
+        return Ok("Pharmacist registered successfully.");
+    }
 
         private bool IsValidPassword(string password)
         {
@@ -471,6 +473,24 @@ namespace TeleMedicineApp.Areas.Pharmacist.Controllers
                 pharmacist.DoctorId,
                 pharmacist.PatientId
             });
+        }
+        
+        
+        
+        [HttpGet("{email}")]
+        public async Task<IActionResult> GetPharmacistIdByEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return BadRequest("Email is required.");
+
+            var pharmacist = await _context.PharmacistDetails
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.User.Email.ToLower() == email.ToLower());
+
+            if (pharmacist == null)
+                return NotFound("Pharmacist not found.");
+
+            return Ok(new { pharmacist.PharmacistId });
         }
     }
 }

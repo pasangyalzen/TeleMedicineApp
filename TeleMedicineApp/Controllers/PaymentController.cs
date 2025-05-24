@@ -23,6 +23,7 @@ namespace TeleMedicineApp.Controllers
         /// Initiates a payment and returns the Khalti payment URL.
         /// </summary>
         [HttpPost("initiate")]
+        [AllowAnonymous]
         public async Task<IActionResult> InitiatePayment([FromBody] PaymentRequestModel request)
         {
             if (request == null || request.Amount <= 0 || string.IsNullOrEmpty(request.OrderId))

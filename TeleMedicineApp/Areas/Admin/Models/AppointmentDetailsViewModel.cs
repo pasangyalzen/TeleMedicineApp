@@ -4,8 +4,8 @@ namespace TeleMedicineApp.Areas.Admin.Models
     {
         public int DoctorId { get; set; }          // Doctor's ID
         public int PatientId { get; set; }         // Patient's ID
-        public string DoctorName { get; set; }     // (Optional) Display purpose
-        public string PatientName { get; set; }    // (Optional) Display purpose
+        public string? DoctorName { get; set; }     // (Optional) Display purpose
+        public string? PatientName { get; set; }    // (Optional) Display purpose
         public DateTime AppointmentDate { get; set; } // Only the date (no time component)
         public TimeSpan StartTime { get; set; }    // Appointment start time
         public TimeSpan EndTime { get; set; }      // Appointment end time
