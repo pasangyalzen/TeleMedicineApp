@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TeleMedicineApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+130d6b2a393aa7cba4b3dae29898cded65b7b6e0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2be0de45c570b0cefcfca5e9feb2109d604b0e48")]
 [assembly: System.Reflection.AssemblyProductAttribute("TeleMedicineApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TeleMedicineApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

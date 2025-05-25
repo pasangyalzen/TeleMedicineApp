@@ -57,16 +57,36 @@
       "PackagePath": "staticwebassets/uploads/doctors/e55bacf3-93d4-42eb-9abc-d2105ca753ff.png"
     },
     {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/patients/5e1c71ae-348c-4538-8422-8498d48fb12b.jpg",
+      "PackagePath": "staticwebassets/uploads/patients/5e1c71ae-348c-4538-8422-8498d48fb12b.jpg"
+    },
+    {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/patients/68d60425-95f3-40f0-9326-bfbc83aa8882.jpg",
       "PackagePath": "staticwebassets/uploads/patients/68d60425-95f3-40f0-9326-bfbc83aa8882.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/patients/e44f500c-6901-4393-bb64-6104e2c71498.jpg",
+      "PackagePath": "staticwebassets/uploads/patients/e44f500c-6901-4393-bb64-6104e2c71498.jpg"
     },
     {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/2036af94-1ca0-4fd1-bf36-dec5eabd9e85.jpg",
       "PackagePath": "staticwebassets/uploads/pharmacists/2036af94-1ca0-4fd1-bf36-dec5eabd9e85.jpg"
     },
     {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/454740ee-0e5d-4641-8887-d908080647bf.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/454740ee-0e5d-4641-8887-d908080647bf.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/527f880e-5e1e-4f1c-9a1a-58626f35219b.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/527f880e-5e1e-4f1c-9a1a-58626f35219b.jpg"
+    },
+    {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/89de3967-bca7-47e5-9cae-a80e3c67e542.jpg",
       "PackagePath": "staticwebassets/uploads/pharmacists/89de3967-bca7-47e5-9cae-a80e3c67e542.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/8d0aa300-0cbe-4be2-992a-9b9c3b06954d.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/8d0aa300-0cbe-4be2-992a-9b9c3b06954d.jpg"
     },
     {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/8f79795e-dcf7-455e-9df0-d5d7842af43a.jpg",
@@ -79,6 +99,10 @@
     {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/a35ef01b-2e49-4ee7-a3e4-311a5d7eb563.jpg",
       "PackagePath": "staticwebassets/uploads/pharmacists/a35ef01b-2e49-4ee7-a3e4-311a5d7eb563.jpg"
+    },
+    {
+      "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/e0449cbe-a5e7-45a7-8c52-dbd0bc9ce866.jpg",
+      "PackagePath": "staticwebassets/uploads/pharmacists/e0449cbe-a5e7-45a7-8c52-dbd0bc9ce866.jpg"
     },
     {
       "Id": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/pharmacists/f45fe768-d653-44ca-b6f5-59cc1afa0607.jpg",

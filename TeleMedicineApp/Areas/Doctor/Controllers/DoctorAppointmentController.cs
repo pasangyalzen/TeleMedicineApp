@@ -438,6 +438,15 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
             return NotFound(new { message = "Appointment not found" });
         }
 
+        // Check if consultation already exists for this appointment
+        var existingConsultation = await _context.Consultations
+            .FirstOrDefaultAsync(c => c.AppointmentId == dto.AppointmentId);
+
+        if (existingConsultation != null)
+        {
+            return Conflict(new { message = "Consultation already created for this appointment." });
+        }
+
         var consultation = new Consultation
         {
             AppointmentId = dto.AppointmentId,
@@ -512,6 +521,15 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
         if (consultation == null)
         {
             return NotFound(new { message = "Consultation not found" });
+        }
+
+        // Check if a prescription already exists for the given ConsultationId
+        var existingPrescription = await _context.Prescriptions
+            .FirstOrDefaultAsync(p => p.ConsultationId == prescriptionRequest.ConsultationId);
+
+        if (existingPrescription != null)
+        {
+            return Conflict(new { message = "Prescription already created for this consultation." });
         }
 
         var prescription = new Prescription
