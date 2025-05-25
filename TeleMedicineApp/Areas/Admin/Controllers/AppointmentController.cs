@@ -151,109 +151,109 @@ public class AppointmentController : ApiControllerBase
     
     
         [HttpPost]
-[AllowAnonymous]
-public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
-{
-    try
-    {
-        if (model == null)
+        [AllowAnonymous]
+        public async Task<IActionResult> CreateAppointment([FromBody] AppointmentDetailsViewModel model)
         {
-            _logger.LogWarning("CreateAppointment called with null model");
-            return BadRequest("Invalid appointment details: model is null");
-        }
-
-        _logger.LogInformation("CreateAppointment called with data: {@Model}", model);
-
-        if (!model.IsValid())
-        {
-            _logger.LogWarning("CreateAppointment validation failed: {@Model}", model);
-            return BadRequest("Invalid appointment details: failed validation");
-        }
-
-        // Normalize time
-        model.NormalizeAppointmentTime();
-
-        _logger.LogInformation("Normalized appointment times: AppointmentDate={AppointmentDate}, StartTime={StartTime}, EndTime={EndTime}",
-            model.AppointmentDate, model.StartTime, model.EndTime);
-
-        string username = User.Identity?.Name ?? "StaticUser";
-        _logger.LogInformation("Appointment creation initiated by user: {Username}", username);
-
-        // Fetch user IDs
-        var patient = await _context.PatientDetails
-            .Where(p => p.PatientId == model.PatientId)
-            .Select(p => new { p.UserId, p.FullName })
-            .FirstOrDefaultAsync();
-
-        var patientEmail = await _context.Users
-            .Where(u => u.Id == patient.UserId)
-            .Select(u => u.Email)
-            .FirstOrDefaultAsync();
-
-        var doctor = await _context.DoctorDetails
-            .Where(d => d.DoctorId == model.DoctorId)
-            .Select(d => new { d.UserId, d.FullName })
-            .FirstOrDefaultAsync();
-
-        var doctorEmail = await _context.Users
-            .Where(u => u.Id == doctor.UserId)
-            .Select(u => u.Email)
-            .FirstOrDefaultAsync();
-
-        model.PatientName = patient?.FullName ?? model.PatientName;
-        model.DoctorName = doctor?.FullName ?? model.DoctorName;
-
-        // Save appointment
-        var result = await _appointmentManager.CreateAppointment(model, username);
-
-        if (result == null)
-        {
-            _logger.LogError("CreateAppointment returned null result for model: {@Model}", model);
-            return StatusCode(500, "Internal server error while creating appointment");
-        }
-
-        if (result.IsSuccess)
-        {
-            _logger.LogInformation("Appointment created successfully: {Message}", result.ResultMessage);
-
             try
             {
-                var subject = "Appointment Confirmation";
-                var body = $"Dear {model.PatientName},\n\nYour appointment with Dr. {model.DoctorName} on {model.AppointmentDate:yyyy-MM-dd} at {model.StartTime} has been successfully scheduled.\n\nThank you,\nTeleMedicine Team";
-
-                if (!string.IsNullOrWhiteSpace(patientEmail))
+                if (model == null)
                 {
-                    await _emailService.SendEmailAsync(patientEmail, subject, body);
-                    _logger.LogInformation("Confirmation email sent to patient: {Email}", patientEmail);
+                    _logger.LogWarning("CreateAppointment called with null model");
+                    return BadRequest("Invalid appointment details: model is null");
                 }
 
-                if (!string.IsNullOrWhiteSpace(doctorEmail))
+                _logger.LogInformation("CreateAppointment called with data: {@Model}", model);
+
+                if (!model.IsValid())
                 {
-                    var doctorBody = $"Dear Dr. {model.DoctorName},\n\nYou have a new appointment scheduled with {model.PatientName} on {model.AppointmentDate:yyyy-MM-dd} at {model.StartTime}.\n\nTeleMedicine Team";
-                    await _emailService.SendEmailAsync(doctorEmail, subject, doctorBody);
-                    _logger.LogInformation("Notification email sent to doctor: {Email}", doctorEmail);
+                    _logger.LogWarning("CreateAppointment validation failed: {@Model}", model);
+                    return BadRequest("Invalid appointment details: failed validation");
+                }
+
+                // Normalize time
+                model.NormalizeAppointmentTime();
+
+                _logger.LogInformation("Normalized appointment times: AppointmentDate={AppointmentDate}, StartTime={StartTime}, EndTime={EndTime}",
+                    model.AppointmentDate, model.StartTime, model.EndTime);
+
+                string username = User.Identity?.Name ?? "StaticUser";
+                _logger.LogInformation("Appointment creation initiated by user: {Username}", username);
+
+                // Fetch user IDs
+                var patient = await _context.PatientDetails
+                    .Where(p => p.PatientId == model.PatientId)
+                    .Select(p => new { p.UserId, p.FullName })
+                    .FirstOrDefaultAsync();
+
+                var patientEmail = await _context.Users
+                    .Where(u => u.Id == patient.UserId)
+                    .Select(u => u.Email)
+                    .FirstOrDefaultAsync();
+
+                var doctor = await _context.DoctorDetails
+                    .Where(d => d.DoctorId == model.DoctorId)
+                    .Select(d => new { d.UserId, d.FullName })
+                    .FirstOrDefaultAsync();
+
+                var doctorEmail = await _context.Users
+                    .Where(u => u.Id == doctor.UserId)
+                    .Select(u => u.Email)
+                    .FirstOrDefaultAsync();
+
+                model.PatientName = patient?.FullName ?? model.PatientName;
+                model.DoctorName = doctor?.FullName ?? model.DoctorName;
+
+                // Save appointment
+                var result = await _appointmentManager.CreateAppointment(model, username);
+
+                if (result == null)
+                {
+                    _logger.LogError("CreateAppointment returned null result for model: {@Model}", model);
+                    return StatusCode(500, "Internal server error while creating appointment");
+                } 
+
+                if (result.IsSuccess)
+                {
+                    _logger.LogInformation("Appointment created successfully: {Message}", result.ResultMessage);
+
+                    try
+                    {
+                        var subject = "Appointment Confirmation";
+                        var body = $"Dear {model.PatientName},\n\nYour appointment with Dr. {model.DoctorName} on {model.AppointmentDate:yyyy-MM-dd} at {model.StartTime} has been successfully scheduled.\n\nThank you,\nTeleMedicine Team";
+
+                        if (!string.IsNullOrWhiteSpace(patientEmail))
+                        {
+                            await _emailService.SendEmailAsync(patientEmail, subject, body);
+                            _logger.LogInformation("Confirmation email sent to patient: {Email}", patientEmail);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(doctorEmail))
+                        {
+                            var doctorBody = $"Dear Dr. {model.DoctorName},\n\nYou have a new appointment scheduled with {model.PatientName} on {model.AppointmentDate:yyyy-MM-dd} at {model.StartTime}.\n\nTeleMedicine Team";
+                            await _emailService.SendEmailAsync(doctorEmail, subject, doctorBody);
+                            _logger.LogInformation("Notification email sent to doctor: {Email}", doctorEmail);
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError(emailEx, "Failed to send confirmation emails.");
+                        // Continue even if email fails
+                    }
+
+                    return Ok(new { message = result.ResultMessage ?? "Appointment created successfully." });
+                }
+                else
+                {
+                    _logger.LogWarning("CreateAppointment failed: {ErrorMessage}", result.ErrorMessage);
+                    return BadRequest(new { message = result.ErrorMessage });
                 }
             }
-            catch (Exception emailEx)
+            catch (Exception ex)
             {
-                _logger.LogError(emailEx, "Failed to send confirmation emails.");
-                // Continue even if email fails
+                _logger.LogError(ex, "Exception occurred while creating appointment with data: {@Model}", model);
+                return StatusCode(500, new { message = "An error occurred while creating the appointment" });
             }
-
-            return Ok(new { message = result.ResultMessage ?? "Appointment created successfully." });
         }
-        else
-        {
-            _logger.LogWarning("CreateAppointment failed: {ErrorMessage}", result.ErrorMessage);
-            return BadRequest(new { message = result.ErrorMessage });
-        }
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Exception occurred while creating appointment with data: {@Model}", model);
-        return StatusCode(500, new { message = "An error occurred while creating the appointment" });
-    }
-}
         
     [HttpPut("{appointmentId}")]
     public async Task<IActionResult> MarkAppointmentCompleted(int appointmentId)

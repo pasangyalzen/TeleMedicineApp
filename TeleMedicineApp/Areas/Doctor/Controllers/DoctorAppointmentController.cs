@@ -45,7 +45,7 @@ public class DoctorAppointmentController : ApiControllerBase
 
         var appointments = await _context.Appointments
             .Where(a => a.DoctorId == doctorId && a.AppointmentDate == today &&
-                        a.Status != "Cancelled" && a.Status != "Completed")
+                        a.Status == "Confirmed")
             .OrderBy(a => a.AppointmentDate)
             .Join(_context.PatientDetails,
                 appointment => appointment.PatientId,
