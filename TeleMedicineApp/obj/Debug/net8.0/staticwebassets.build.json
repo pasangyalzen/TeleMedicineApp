@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "ISmrhuDRJ4TyHrZaKD3tSjbukhH2YTiLCZR5fjB8JLY=",
+  "Hash": "nwmyr1F/ZZ5Gp1MFHD4TY/KaDTS+8X/ObEZl0uOjjv0=",
   "Source": "TeleMedicineApp",
   "BasePath": "_content/TeleMedicineApp",
   "Mode": "Default",
@@ -1326,6 +1326,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot/uploads/doctors/70b9328c-f464-49d1-87c8-1f222d4122c3.jpg"
+    },
+    {
+      "Identity": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/9ea4494a-76a7-4864-a207-4a363c9a9fd7.jpg",
+      "SourceId": "TeleMedicineApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/",
+      "BasePath": "_content/TeleMedicineApp",
+      "RelativePath": "uploads/doctors/9ea4494a-76a7-4864-a207-4a363c9a9fd7.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/uploads/doctors/9ea4494a-76a7-4864-a207-4a363c9a9fd7.jpg"
     },
     {
       "Identity": "/Users/pasanggelzeen/dev/FinalYearProject/TeleMedicineApp/TeleMedicineApp/wwwroot/uploads/doctors/beb19f1f-90c5-4e49-a843-717ff0aad7e5.jpg",

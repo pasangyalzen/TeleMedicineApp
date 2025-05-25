@@ -8,6 +8,7 @@ using TeleMedicineApp.Areas.Doctor.Models;
 using TeleMedicineApp.Areas.Doctor.ViewModels;
 using TeleMedicineApp.Controllers;
 using TeleMedicineApp.Data;
+using TeleMedicineApp.Services;
 
 namespace TeleMedicineApp.Areas.Doctor.Controllers;
 
@@ -21,17 +22,20 @@ public class DoctorAppointmentController : ApiControllerBase
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ILogger _logger;
     private readonly ApplicationDbContext _context;
+    private readonly EmailService _emailService;
 
     public DoctorAppointmentController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+            EmailService emailService)
     {
         _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = loggerFactory.CreateLogger<DoctorAppointmentController>();
+        _emailService = emailService;
     }
 
     [HttpGet("{doctorId}")]
@@ -86,6 +90,7 @@ public class DoctorAppointmentController : ApiControllerBase
     [HttpPut("{appointmentId}")]
 public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromBody] RescheduleAppointmentRequest request)
 {
+    
     if (appointmentId != request.AppointmentId)
     {
         return BadRequest("Appointment ID mismatch.");
@@ -163,6 +168,48 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
     appointment.UpdatedAt = DateTime.UtcNow;
 
     await _context.SaveChangesAsync();
+    try
+    {
+        var patient = await _context.PatientDetails
+            .Where(p => p.PatientId == appointment.PatientId)
+            .Select(p => new { p.UserId, p.FullName })
+            .FirstOrDefaultAsync();
+
+        var doctor = await _context.DoctorDetails
+            .Where(d => d.DoctorId == appointment.DoctorId)
+            .Select(d => new { d.UserId, d.FullName })
+            .FirstOrDefaultAsync();
+
+        var patientEmail = await _context.Users
+            .Where(u => u.Id == patient.UserId)
+            .Select(u => u.Email)
+            .FirstOrDefaultAsync();
+
+        var doctorEmail = await _context.Users
+            .Where(u => u.Id == doctor.UserId)
+            .Select(u => u.Email)
+            .FirstOrDefaultAsync();
+
+        var subject = "Appointment Rescheduled";
+
+        if (!string.IsNullOrWhiteSpace(patientEmail))
+        {
+            var patientBody = $"Dear {patient.FullName},\n\nYour appointment with Dr. {doctor.FullName} has been rescheduled to {appointment.AppointmentDate:yyyy-MM-dd} from {appointment.StartTime} to {appointment.EndTime}.\n\nThank you,\nTeleMedicine Team";
+            await _emailService.SendEmailAsync(patientEmail, subject, patientBody);
+        }
+
+        if (!string.IsNullOrWhiteSpace(doctorEmail))
+        {
+            var doctorBody = $"Dear Dr. {doctor.FullName},\n\nThe appointment with patient {patient.FullName} has been rescheduled to {appointment.AppointmentDate:yyyy-MM-dd} from {appointment.StartTime} to {appointment.EndTime}.\n\nTeleMedicine Team";
+            await _emailService.SendEmailAsync(doctorEmail, subject, doctorBody);
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to send reschedule notification emails.");
+        // Continue even if email fails
+    }
+
 
     return Ok("Appointment rescheduled successfully.");
 }
@@ -181,6 +228,47 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
 
         _context.Appointments.Update(appointment);
         await _context.SaveChangesAsync();
+        try
+        {
+            var patient = await _context.PatientDetails
+                .Where(p => p.PatientId == appointment.PatientId)
+                .Select(p => new { p.UserId, p.FullName })
+                .FirstOrDefaultAsync();
+
+            var doctor = await _context.DoctorDetails
+                .Where(d => d.DoctorId == appointment.DoctorId)
+                .Select(d => new { d.UserId, d.FullName })
+                .FirstOrDefaultAsync();
+
+            var patientEmail = await _context.Users
+                .Where(u => u.Id == patient.UserId)
+                .Select(u => u.Email)
+                .FirstOrDefaultAsync();
+
+            var doctorEmail = await _context.Users
+                .Where(u => u.Id == doctor.UserId)
+                .Select(u => u.Email)
+                .FirstOrDefaultAsync();
+
+            var subject = "Appointment Cancelled";
+
+            if (!string.IsNullOrWhiteSpace(patientEmail))
+            {
+                var patientBody = $"Dear {patient.FullName},\n\nYour appointment with Dr. {doctor.FullName} on {appointment.AppointmentDate:yyyy-MM-dd} at {appointment.StartTime} has been cancelled.\n\nIf this was a mistake, please book a new appointment.\n\nThank you,\nTeleMedicine Team";
+                await _emailService.SendEmailAsync(patientEmail, subject, patientBody);
+            }
+
+            if (!string.IsNullOrWhiteSpace(doctorEmail))
+            {
+                var doctorBody = $"Dear Dr. {doctor.FullName},\n\nThe appointment with patient {patient.FullName} on {appointment.AppointmentDate:yyyy-MM-dd} at {appointment.StartTime} has been cancelled.\n\nTeleMedicine Team";
+                await _emailService.SendEmailAsync(doctorEmail, subject, doctorBody);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send cancellation notification emails.");
+            // Continue even if email fails
+        }
 
         return Ok("Appointment cancelled successfully.");
     }
@@ -557,6 +645,65 @@ public async Task<IActionResult> RescheduleAppointment(int appointmentId, [FromB
         }
 
         await _context.SaveChangesAsync();
+        try
+{
+    // Get the appointment ID from the consultation
+    var appointmentId = consultation.AppointmentId;
+
+    // Fetch the patient and doctor info from the appointment
+    var appointment = await _context.Appointments
+        .Where(a => a.AppointmentId == appointmentId)
+        .Select(a => new { a.PatientId, a.DoctorId })
+        .FirstOrDefaultAsync();
+
+    if (appointment == null)
+    {
+        _logger.LogWarning("Appointment not found for consultation ID: {ConsultationId}", consultation.ConsultationId);
+        return Ok(new { message = "Prescription created, but email notification skipped (appointment not found)." });
+    }
+
+    // Fetch patient's user and email
+    var patient = await _context.PatientDetails
+        .Where(p => p.PatientId == appointment.PatientId)
+        .Select(p => new { p.FullName, p.UserId })
+        .FirstOrDefaultAsync();
+
+    var doctor = await _context.DoctorDetails
+        .Where(d => d.DoctorId == appointment.DoctorId)
+        .Select(d => new { d.FullName })
+        .FirstOrDefaultAsync();
+
+    if (patient == null || doctor == null)
+    {
+        _logger.LogWarning("Patient or doctor not found for appointment ID: {AppointmentId}", appointmentId);
+        return Ok(new { message = "Prescription created, but email notification skipped (patient or doctor not found)." });
+    }
+
+    var patientEmail = await _context.Users
+        .Where(u => u.Id == patient.UserId)
+        .Select(u => u.Email)
+        .FirstOrDefaultAsync();
+
+    if (!string.IsNullOrWhiteSpace(patientEmail))
+    {
+        var subject = "New Prescription Added";
+        var body = $"Dear {patient.FullName},\n\n" +
+                   $"A new prescription has been added following your consultation with Dr. {doctor.FullName}.\n\n" +
+                   $"Please log in to your account to view the prescription details.\n\n" +
+                   "Thank you,\nTeleMedicine Team";
+
+        await _emailService.SendEmailAsync(patientEmail, subject, body);
+    }
+    else
+    {
+        _logger.LogWarning("Email not found for patient with UserId: {UserId}", patient.UserId);
+    }
+}
+catch (Exception ex)
+{
+    _logger.LogError(ex, "Failed to send prescription notification email.");
+    // Do not interrupt the main flow
+}
 
         return Ok(new { message = "Prescription created successfully" });
     }
